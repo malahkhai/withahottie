@@ -3,7 +3,7 @@ import { loadWorkspace } from "@/lib/workspace/repository";
 import { WorkspaceProvider } from "@/components/workspace-provider";
 import { FanAccount } from "@/components/fan-account";
 import { createClient } from "@/lib/supabase/server";
-export const metadata = { title: "Your account" };
+export const metadata = { title: "Your account", robots: { index: false, follow: false } };
 export default async function Account() {
   const viewer = await requireRole(["fan", "creator", "admin"]);
   const data = await loadWorkspace(viewer);

@@ -19,6 +19,18 @@ import assert from "node:assert/strict";
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const base = process.env.TEST_APP_URL || "http://127.0.0.1:3000";
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: async (value) => { window.__sharedProfile = value.url; } });
+  });
+  await page.goto(base + '/@stella');
+  await page.getByRole('button', {name: 'Share Stella May’s profile'}).click();
+  assert.equal(await page.evaluate(() => window.__sharedProfile), `${process.env.NEXT_PUBLIC_APP_URL || 'https://getreplypass.com'}/@stella`);
+  for (const route of ['/terms', '/privacy', '/community-guidelines', '/creator-terms']) {
+    await page.goto(base + route);
+    await page.getByText('Draft placeholder — not finalized.', {exact:true}).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  }
+
   await page.goto(base + "/creator/dashboard", { waitUntil: "domcontentloaded" });
   assert.ok(page.url().includes("/login"), "anonymous protected route");
   await page.getByRole("button", { name: "Explore creator demo" }).click();

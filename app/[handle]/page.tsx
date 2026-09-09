@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
+import { siteConfig } from "@/lib/site";
 import { notFound } from "next/navigation";
 import { CreatorProfile } from "@/components/creator-profile";
 import { findCreator } from "@/lib/creators/repository";
@@ -8,12 +10,16 @@ export async function generateMetadata({
   params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
   const creator = await findCreator((await params).handle);
-  return {
-    title: creator ? creator.name : "Creator not found",
-    description: creator
-      ? `${creator.name} on ReplyPass. A little closer to the people you follow. No reply = no charge.`
-      : "Find your next conversation on ReplyPass.",
-  };
+  if (!creator)
+    return {
+      title: "Creator not found",
+      robots: { index: false, follow: false },
+    };
+  return pageMetadata(
+    creator.name,
+    `/${creator.handle}`,
+    `${creator.name} on ${siteConfig.name}. ${siteConfig.tagline} ${siteConfig.fanPromise}`,
+  );
 }
 export default async function Profile({
   params,

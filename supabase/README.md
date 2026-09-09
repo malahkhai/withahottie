@@ -1,9 +1,10 @@
 # Database and authorization
 
-Apply migrations in filename order. Existing Task 1 databases need only 002 and 003. Supabase auth, storage and standard roles must exist first.
+Apply migrations in filename order. Existing Task 1 databases need 002–004. Supabase auth, storage and standard roles must exist first.
 
 - 001: original 16 UUID domain tables, profile signup trigger, money constraints, grants and RLS. Signup role metadata is ignored.
 - 002: creator onboarding/availability/social fields, saved creators, request timestamps, validated atomic creator/profile/pricing RPC, request response RPC, member-only messaging RPC, avatar bucket and Realtime publication membership.
+- 004: rejects null request actions before any state change; preserves financial state.
 - 003: private chat attachment bucket and member-authorized attachment RPC. Signed URLs expire after five minutes.
 
 Completed onboarding promotes a fan to creator and publishes an unverified pending application. Only trusted moderation can verify/approve a creator. Rejected and suspended creators cannot relaunch themselves. Admin is never a signup option.

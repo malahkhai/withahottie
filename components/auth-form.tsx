@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { authOrigin } from "@/lib/site";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -58,7 +59,7 @@ export function AuthForm({
               password,
               options: {
                 data: { display_name: String(data.get("name")).trim() },
-                emailRedirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+                emailRedirectTo: `${authOrigin(location.origin)}/auth/callback?next=${encodeURIComponent(next)}`,
               },
             });
       if (result.error) throw result.error;

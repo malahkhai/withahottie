@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { creatorUrl, siteConfig } from "@/lib/site";
 import { useState, useEffect } from "react";
 import type { PublicCreator } from "@/types/creator";
 import type { Offering } from "@/types/domain";
@@ -93,7 +94,7 @@ function Checkout({
       </p>
       {offering.kind !== "vip" && (
         <p className="promise-note">
-          <Icon name="shield" size={16} /> No reply = no charge.
+          <Icon name="shield" size={16} /> {siteConfig.fanPromise}
         </p>
       )}
       <div className="checkout-total">
@@ -205,22 +206,22 @@ export function CreatorProfile({
     try {
       if (navigator.share)
         await navigator.share({
-          title: `Meet ${creator.name} on ReplyPass`,
-          url: location.href,
+          title: `Meet ${creator.name} on ${siteConfig.name}`,
+          url: creatorUrl(creator.handle),
         });
       else {
-        await navigator.clipboard.writeText(location.href);
+        await navigator.clipboard.writeText(creatorUrl(creator.handle));
         setShareStatus("Profile link copied");
       }
     } catch {
-      setShareStatus("You can share the URL from your address bar.");
+      setShareStatus(`Share this profile: ${creatorUrl(creator.handle)}`);
     }
   }
   return (
     <>
       <main id="main" className="profile-page">
         <div className="profile-breadcrumb">
-          <span>A little closer to the people you follow.</span>
+          <span>{siteConfig.tagline}</span>
           <span>
             GOOD CONVERSATIONS START HERE <Icon name="heart" size={13} />
           </span>
@@ -301,7 +302,7 @@ export function CreatorProfile({
               <Icon name="shield" size={23} />
               <div>
                 <strong>Good energy. Guaranteed.</strong>
-                <p>No reply = no charge. It’s that simple.</p>
+                <p>{siteConfig.fanPromise} It’s that simple.</p>
               </div>
             </div>
           </section>
@@ -346,7 +347,7 @@ export function CreatorProfile({
               ))}
             </div>
             <p className="payment-promise">
-              <Icon name="shield" size={15} /> No reply = no charge. Always.
+              <Icon name="shield" size={15} /> {siteConfig.fanPromise} Always.
             </p>
             {vip && (
               <>
@@ -419,7 +420,7 @@ export function CreatorProfile({
         <footer className="profile-footer">
           <span>Real attention. A little connection.</span>
           <span>
-            replypass<span className="pink">.</span>
+            {siteConfig.logo}<span className="pink">.</span>
           </span>
         </footer>
       </main>

@@ -1,3 +1,4 @@
+export const metadata = { robots: { index: false, follow: false } };
 import { requireRole } from "@/lib/auth/session";
 import { loadWorkspace } from "@/lib/workspace/repository";
 import { WorkspaceProvider } from "@/components/workspace-provider";

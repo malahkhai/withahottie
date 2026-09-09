@@ -64,15 +64,19 @@ All amounts are integer minor units; currency is stored separately. `lib/payment
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Reserved for Task 3 |
 | `STRIPE_SECRET_KEY` | Reserved for Task 3; server-only |
 | `STRIPE_WEBHOOK_SECRET` | Reserved for future webhook verification |
-| `NEXT_PUBLIC_APP_URL` | Application origin, initially `http://localhost:3000` |
+| `NEXT_PUBLIC_APP_URL` | Public sharing/metadata origin: `https://getreplypass.com` |
 
 Never commit secrets or `.env.local`. The service-role and Stripe keys are unused in Task 2; setting them does not enable payments.
 
 ## Supabase setup
 
-1. Create a Supabase project and apply **all migrations in filename order**. Existing Task 1 projects only need migrations 002 and 003. Use the SQL editor, or initialize/link the Supabase CLI and run `npx supabase db push`.
+1. Create a Supabase project and apply **all migrations in filename order**. Existing Task 1 projects need migrations 002–004; existing Task 2 projects need only 004. Use the SQL editor, or initialize/link the Supabase CLI and run `npx supabase db push`.
 2. Set the URL and anon key, then restart Next.js. Enable email/password authentication, email confirmation, SMTP and a 12-character minimum password policy.
-3. Set Auth Site URL to the app origin and allow its `/auth/callback` URL. Add localhost and each trusted production/preview callback explicitly.
+3. Set Supabase Auth **Site URL** to `https://getreplypass.com`. Add these **Redirect URLs**:
+   - `https://getreplypass.com/auth/callback`
+   - `http://localhost:3000/auth/callback`
+   - If using the current local preview: `http://127.0.0.1:3003/auth/callback`
+   The app appends a constrained `next` query parameter. Allow the exact callback variants with `?next=%2Faccount`, `?next=%2Fcreator%2Fapply`, and `?next=%2Fcreator%2Fdashboard` for each origin in use. Do not add broad production host wildcards. Explicitly configure a trusted preview origin in `NEXT_PUBLIC_APP_URL` and allow that callback when testing email confirmation on previews.
 4. Migration 001 creates the original 16 domain tables and signup profile trigger. Migration 002 adds onboarding, availability, social links, saved creators, request timestamps, constrained creator RPCs, public avatar storage and member-only Realtime messages. Migration 003 adds private chat attachment storage and its send RPC.
 5. Keep the `private` schema out of exposed API schemas. Verify `messages` is enabled in the `supabase_realtime` publication. Migrations add it when the publication exists.
 6. Optionally generate database types: `npx supabase gen types typescript --linked > types/database.ts`.
@@ -134,3 +138,13 @@ Unit tests cover payment transitions, server quotes, fee rounding, creator valid
 Import the existing GitHub repository into Vercel, select Next.js and Node 22.x, and retain the default build command. Configure app origin, Supabase values and auth redirects before testing real accounts. Standard App Router configuration requires no custom hosting adapter.
 
 Task 3 will implement Stripe/Connect and webhook-controlled financial workflows. Real payment capture, payouts, background expiration, subscription billing, moderation operations and production rate limiting are not implemented in Task 2. Locked preview tiles are demo media, not a payment entitlement system.
+
+## Production identity — Task 2.5
+
+The product is **ReplyPass**; `getreplypass.com` is its domain, not a different product name. `lib/site.ts` centralizes the identity, public URL, promises and creator sharing. Set `NEXT_PUBLIC_APP_URL=https://getreplypass.com` in Vercel. Local routing remains relative, and authentication callbacks preserve loopback origins. Optionally set `NEXT_PUBLIC_APP_URL=http://localhost:3000` when testing local share links. Public environment values are baked into client bundles, so rebuild after changing them.
+
+Creator canonical/share URLs use `https://getreplypass.com/@username`. `lib/metadata.ts` supplies per-page social/canonical metadata; `/og` generates a local 1200×630 text-based PNG with no external font/image requests. Replace its artwork in `app/og/route.tsx` when approved. The existing SVG favicon remains in place. Draft trust pages live at `/terms`, `/privacy`, `/community-guidelines`, and `/creator-terms`, with footer links and noindex metadata. They require review and completion before public launch.
+
+Attach `getreplypass.com` to the Vercel project and configure the DNS records Vercel provides; no DNS or domain ownership changes were made in this task. GitHub still uses the legacy repository name. Rename it manually to `replypass` if desired, then update origin to the URL GitHub reports. The existing remote is intentionally preserved.
+
+Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Documents folder is an iCloud source mirror and may be evicted. See `docs/payment-readiness.md` for the Task 3 boundary and security review. Task 2.5 does not enable Stripe or make draft policies final.

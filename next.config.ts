@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { getSupabaseConfig } from "./lib/supabase/config";
+// Fail before bundling if a privileged key was assigned to a public variable.
+getSupabaseConfig();
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {

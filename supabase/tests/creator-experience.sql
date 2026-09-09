@@ -34,6 +34,10 @@ do $$ begin
  begin perform public.send_chat_message('20000000-0000-4000-8000-000000000011','Unauthorized'); raise exception 'Nonmember sent message'; exception when raise_exception then if sqlerrm='Nonmember sent message' then raise; end if; end;
 end $$;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000011',true);
+do $$ begin
+ begin perform public.respond_to_request('40000000-0000-4000-8000-000000000011',null); raise exception 'Null action accepted'; exception when raise_exception then if sqlerrm='Null action accepted' then raise; end if; end;
+ if (select status from public.interaction_requests where id='40000000-0000-4000-8000-000000000011') <> 'pending' then raise exception 'Null action changed request'; end if;
+end $$;
 select public.respond_to_request('40000000-0000-4000-8000-000000000011','accept');
 select public.respond_to_request('40000000-0000-4000-8000-000000000011','complete');
 select public.send_chat_message('20000000-0000-4000-8000-000000000011','Hello from a member');

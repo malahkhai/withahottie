@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteConfig } from "@/lib/site";
 import { Logo } from "./navigation";
 import { Icon } from "./icon";
 import { getViewer } from "@/lib/auth/session";
@@ -14,7 +15,7 @@ export async function PageHeader() {
       <div className="header-inner">
         <Logo />
         <span className="brand-tagline">
-          A little closer to the people you follow.
+          {siteConfig.tagline}
         </span>
         <nav aria-label="Main navigation">
           <Link href="/creator/apply" className="creator-link">

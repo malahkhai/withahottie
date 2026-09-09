@@ -8,6 +8,10 @@ test("production routes render without credentials", async () => {
     "/login",
     "/signup",
     "/creator/apply",
+    "/terms",
+    "/privacy",
+    "/community-guidelines",
+    "/creator-terms",
   ]) {
     const response = await fetch(`${base}${route}`);
     assert.equal(response.status, 200, route);
@@ -54,4 +58,29 @@ test("checkout derives its quote and keeps same-origin protection", async () => 
     ).status,
     403,
   );
+});
+
+test("production identity and draft trust metadata render", async () => {
+  const html = await (
+    await fetch(`${base}/@stella`, { headers: { "User-Agent": "Twitterbot" } })
+  ).text();
+  const canonical =
+    process.env.NEXT_PUBLIC_APP_URL || "https://getreplypass.com";
+  assert.ok(html.includes(`${canonical}/@stella`));
+  assert.match(html, /property="og:site_name" content="ReplyPass"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /rel="canonical"/);
+  for (const route of [
+    "/terms",
+    "/privacy",
+    "/community-guidelines",
+    "/creator-terms",
+  ]) {
+    const page = await (await fetch(`${base}${route}`)).text();
+    assert.match(page, /Draft placeholder/);
+    assert.match(page, /noindex/);
+  }
+  const image = await fetch(`${base}/og`);
+  assert.equal(image.status, 200);
+  assert.match(image.headers.get("content-type"), /image\/png/);
 });

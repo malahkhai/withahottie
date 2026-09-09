@@ -1,7 +1,9 @@
+import { pageMetadata } from "@/lib/metadata";
+import { siteConfig } from "@/lib/site";
 import { AuthForm } from "@/components/auth-form";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { safeNext } from "@/lib/auth/paths";
-export const metadata = { title: "Join ReplyPass" };
+export const metadata = pageMetadata("Join", "/signup", siteConfig.description, true);
 export default async function Signup({
   searchParams,
 }: {

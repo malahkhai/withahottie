@@ -3122,3 +3122,16 @@ body:has(.workspace-shell) > .site-header {
     font-size: 14px;
   }
 }
+
+/* Trust pages stay readable and clear of mobile navigation. */
+.site-footer { max-width: 1120px; margin: 0 auto; padding: 32px 24px calc(100px + env(safe-area-inset-bottom)); color: #60675c; font-size: 13px; }
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.site-footer a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
+.draft-policy { max-width: 760px; margin: 0 auto; padding: 48px 24px; line-height: 1.75; }
+.draft-policy h1 { font-size: clamp(36px, 6vw, 56px); letter-spacing: -0.04em; line-height: 1.1; margin: 18px 0 28px; }
+.draft-policy h2 { font-size: 22px; margin: 32px 0 12px; }
+.draft-policy ul { list-style: disc; padding-left: 24px; }
+.draft-policy li { margin: 12px 0; }
+.draft-notice { border: 1px solid #dbdfd3; background: #f0f2e9; border-radius: 20px; padding: 24px; }
+.draft-notice strong { display: block; margin-bottom: 8px; }
+body:has(.workspace-shell) > .site-footer { display: none; }

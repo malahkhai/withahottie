@@ -1,4 +1,6 @@
 "use client";
+import { siteConfig } from "@/lib/site";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -510,7 +512,7 @@ export function CreatorEditor({
       {step === 5 && (
         <div className="phone-preview">
           <div className="preview-phone-bar">
-            replypass<span className="pink">.</span>
+            {siteConfig.logo}<span className="pink">.</span>
           </div>
           <Image
             src={avatar || draft.image || "/images/avatar.svg"}
@@ -536,7 +538,7 @@ export function CreatorEditor({
                 />
               </div>
             ))}
-          <small>No reply = no charge.</small>
+          <small>{siteConfig.fanPromise}</small>
         </div>
       )}
       {error && (

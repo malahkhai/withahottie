@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { siteConfig } from "@/lib/site";
 import { Icon } from "@/components/icon";
 export function Logo() {
   return (
-    <Link href="/@stella" className="logo" aria-label="ReplyPass home">
-      replypass<span className="logo-dot">.</span>
+    <Link href="/@stella" className="logo" aria-label={`${siteConfig.name} home`}>
+      {siteConfig.logo}<span className="logo-dot">.</span>
     </Link>
   );
 }

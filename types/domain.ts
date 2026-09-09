@@ -13,13 +13,15 @@ export const paymentStatuses = [
   "disputed",
 ] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
+/** ISO currency identifiers are normalized to lowercase at the database/API boundary. */
+export type Currency = "eur" | "usd" | "gbp";
 export interface PaidInteraction {
   id: string;
   fanId: string;
   creatorId: string;
   kind: InteractionKind;
   amountCents: number;
-  currency: "eur";
+  currency: Currency;
   status: PaymentStatus;
   stripePaymentIntentId: string | null;
   expiresAt: string | null;

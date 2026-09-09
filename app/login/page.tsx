@@ -1,7 +1,9 @@
+import { pageMetadata } from "@/lib/metadata";
+import { siteConfig } from "@/lib/site";
 import { AuthForm } from "@/components/auth-form";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { safeNext } from "@/lib/auth/paths";
-export const metadata = { title: "Log in" };
+export const metadata = pageMetadata("Log in", "/login", siteConfig.description, true);
 export default async function Login({
   searchParams,
 }: {
@@ -13,7 +15,7 @@ export default async function Login({
       <span className="eyebrow">YOUR PEOPLE ARE HERE</span>
       <h1>Good to see you.</h1>
       <p className="auth-description">
-        A little closer to the people you follow.
+        {siteConfig.tagline}
       </p>
       {q.error && (
         <p className="form-error" role="alert">
