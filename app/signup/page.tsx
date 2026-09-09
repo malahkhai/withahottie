@@ -1,15 +1,25 @@
 import { AuthForm } from "@/components/auth-form";
 import { getSupabaseConfig } from "@/lib/supabase/config";
-export const metadata = { title: "Join Withahottie" };
-export default function Signup() {
+import { safeNext } from "@/lib/auth/paths";
+export const metadata = { title: "Join ReplyPass" };
+export default async function Signup({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const q = await searchParams;
   return (
     <main id="main" className="auth-page">
-      <span className="eyebrow">MAKE YOURSELF AT HOME</span>
-      <h1>A little closer.</h1>
+      <span className="eyebrow">MAKE A CONNECTION</span>
+      <h1>Your people. Closer.</h1>
       <p className="auth-description">
-        Join your favorite creators for conversations that feel personal.
+        A better way to reach the people who inspire you.
       </p>
-      <AuthForm mode="signup" configured={!!getSupabaseConfig()} />
+      <AuthForm
+        mode="signup"
+        configured={!!getSupabaseConfig()}
+        next={safeNext(q.next)}
+      />
     </main>
   );
 }

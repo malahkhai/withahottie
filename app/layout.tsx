@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { PageHeader } from "@/components/navigation";
+import { PageHeader } from "@/components/page-header";
 import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ),
   title: {
-    default: "Withahottie — Get paid for your attention.",
-    template: "%s | Withahottie",
+    default: "ReplyPass — A little closer to the people you follow.",
+    template: "%s | ReplyPass",
   },
   description:
     "A little closer to your favorite creators. Guaranteed messages, live chats, and personal replies. No reply = no charge.",

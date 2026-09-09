@@ -1,15 +1,17 @@
-import { AuthForm } from "@/components/auth-form";
+import { CreatorEditor } from "@/components/creator-editor";
+import { getViewer } from "@/lib/auth/session";
+import { getSupabaseConfig } from "@/lib/supabase/config";
+import { creatorForUser } from "@/lib/creators/repository";
 export const metadata = { title: "Become a creator" };
-export default function Apply() {
+export default async function Apply() {
+  const viewer = await getViewer();
+  const initial =
+    viewer?.role === "creator" ? await creatorForUser(viewer.id) : undefined;
   return (
-    <main id="main" className="auth-page">
-      <span className="eyebrow">FOR PEOPLE WITH PEOPLE</span>
-      <h1>Your time. Valued.</h1>
-      <p className="auth-description">
-        Get paid for your attention. Build closer connections through messages,
-        personal requests, and your own VIP community.
-      </p>
-      <AuthForm mode="apply" configured={false} />
-    </main>
+    <CreatorEditor
+      initial={initial || undefined}
+      demo={!getSupabaseConfig()}
+      authenticated={!!viewer}
+    />
   );
 }

@@ -23,6 +23,10 @@ export interface PaidInteraction {
   status: PaymentStatus;
   stripePaymentIntentId: string | null;
   expiresAt: string | null;
+  expires_at?: string | null;
+  accepted_at?: string | null;
+  declined_at?: string | null;
+  completed_at?: string | null;
 }
 export interface Offering {
   kind: InteractionKind;

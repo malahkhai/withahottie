@@ -1,35 +1,34 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CreatorProfile } from "@/components/creator-profile";
-// Normalize the encoded @ segment delivered by the route matcher.
-function isStella(handle: string) {
-  try {
-    return decodeURIComponent(handle) === "@stella";
-  } catch {
-    return false;
-  }
-}
-export function generateStaticParams() {
-  return [{ handle: "@stella" }];
-}
+import { findCreator } from "@/lib/creators/repository";
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
-  return isStella((await params).handle)
-    ? {
-        title: "Stella May",
-        description:
-          "Come talk to Stella May. Guaranteed replies, live chats and a little more connection. No reply = no charge.",
-      }
-    : { title: "Creator not found" };
+  const creator = await findCreator((await params).handle);
+  return {
+    title: creator ? creator.name : "Creator not found",
+    description: creator
+      ? `${creator.name} on ReplyPass. A little closer to the people you follow. No reply = no charge.`
+      : "Find your next conversation on ReplyPass.",
+  };
 }
-export default async function ProfilePage({
+export default async function Profile({
   params,
 }: {
   params: Promise<{ handle: string }>;
 }) {
-  if (!isStella((await params).handle)) notFound();
-  return <CreatorProfile />;
+  const { handle } = await params;
+  let decoded = "";
+  try {
+    decoded = decodeURIComponent(handle);
+  } catch {
+    notFound();
+  }
+  if (!decoded.startsWith("@")) notFound();
+  const creator = await findCreator(handle);
+  if (!creator) notFound();
+  return <CreatorProfile creator={creator} />;
 }

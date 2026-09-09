@@ -29,6 +29,7 @@ export function Avatar({
   return (
     <Image
       src={src}
+      unoptimized={src.startsWith("http") || src.startsWith("data:")}
       alt={name}
       width={size}
       height={size}

@@ -1,17 +1,17 @@
-# Database foundation
+# Database and authorization
 
-Apply `migrations/202609090001_foundation.sql` to a fresh Supabase project. It expects Supabase's `auth.users`, `auth.uid()`, and roles (`anon`, `authenticated`, `service_role`). All 16 requested domain tables use UUIDs and RLS.
+Apply migrations in filename order. Existing Task 1 databases need only 002 and 003. Supabase auth, storage and standard roles must exist first.
 
-- Anonymous access: approved creator profiles and active pricing only. Fan profiles are private.
-- Self-service writes: display name/avatar, creator bio/categories, reports, blocks, and notification read timestamps. Column grants prevent role/verification escalation.
-- Messages, memberships, requests, prices, subscriptions, ratings and money: trusted server writes only. Build authorization, blocking, moderation, rate limiting and entitlement checks before adding write endpoints.
-- Messages: members only. Subscriptions/interactions: participants only. Ledger: admin read only. Payouts: owning creator/admin. No public financial records.
-- `private` contains fixed-search-path, security-definer RLS helpers. Do not add it to Supabase's exposed API schemas.
-- Financial references use restrictive deletes to preserve accounting history. Account deletion needs an explicit anonymization/retention workflow rather than cascading away financial records.
-- Role promotion is a trusted operational task after approval, never a signup field. Insert/approve `creator_profiles` and promote `profiles.role` transactionally from a trusted server or SQL editor.
-- `transactions` is append-only by convention for server workers and has no client writes. Event/object/kind uniqueness prevents duplicate ledger effects. Before Stripe integration, add a webhook inbox for event claiming/replay, and a private creator-to-Connect-account mapping.
-- Storage is intentionally unconfigured. Create private buckets and storage-object policies before uploads. SQL media visibility alone does not protect a public bucket.
+- 001: original 16 UUID domain tables, profile signup trigger, money constraints, grants and RLS. Signup role metadata is ignored.
+- 002: creator onboarding/availability/social fields, saved creators, request timestamps, validated atomic creator/profile/pricing RPC, request response RPC, member-only messaging RPC, avatar bucket and Realtime publication membership.
+- 003: private chat attachment bucket and member-authorized attachment RPC. Signed URLs expire after five minutes.
 
-Stella is deterministic application demo data in `lib/demo.ts`, so the UI works without inserting fake auth users into a real database. No SQL demo seed is automatically inserted into production.
+Completed onboarding promotes a fan to creator and publishes an unverified pending application. Only trusted moderation can verify/approve a creator. Rejected and suspended creators cannot relaunch themselves. Admin is never a signup option.
 
-`tests/rls.sql` is a rollback-only verification script for a **disposable test database**, run after the migration. It seeds auth fixtures and checks privacy and write-denial boundaries. Never run test fixtures against production.
+Public access covers published creator profiles and enabled pricing. Fan profiles, conversations, subscriptions and requests remain scoped to participants. Transactions are admin-readable; payouts are scoped to the creator/admin. No browser role can capture money or write the ledger.
+
+The request response RPC changes only request state/timestamps, never payment status. Payment capture, refunds, disputes and payouts remain reserved for future trusted Stripe webhook processing. Currency is separate from integer minor-unit prices.
+
+The `private` schema must stay outside exposed API schemas. Security-definer functions use fixed search paths and explicit authorization. Public avatar objects are intentional; chat attachment objects require membership. Object policies enforce upload ownership and conversation membership. Message sends also enforce blocks.
+
+Demo users/data live in application fixtures and browser storage. No fake auth users are automatically inserted into production. Run `tests/rls.sql` and `tests/creator-experience.sql` only on a disposable test database; both roll back all fixtures.

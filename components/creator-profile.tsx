@@ -1,26 +1,21 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
-import { stella, offerings, vip } from "@/lib/demo";
+import { useState, useEffect } from "react";
+import type { PublicCreator } from "@/types/creator";
 import type { Offering } from "@/types/domain";
 import { Avatar, Badge, Button, Card, CreatorStat, Price } from "./ui";
 import { Icon, type IconName } from "./icon";
 import { BottomSheet } from "./bottom-sheet";
+import { SaveCreator } from "./fan-account";
 import { BottomNavigation } from "./navigation";
 
-const titles = {
-  message: "Message Stella",
-  live_chat: "Live chat with Stella",
-  voice_note: "A voice note from Stella",
-  photo: "Request a photo",
-  video: "Request a video",
-  vip: "A little closer to Stella",
-};
 function Checkout({
   offering,
+  creator,
   onClose,
 }: {
   offering: Offering;
+  creator: PublicCreator;
   onClose: () => void;
 }) {
   const [message, setMessage] = useState("");
@@ -37,7 +32,12 @@ function Checkout({
       const response = await fetch("/api/checkout/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: offering.kind, message, minutes }),
+        body: JSON.stringify({
+          kind: offering.kind,
+          message,
+          minutes,
+          handle: creator.handle,
+        }),
       });
       const result = await response.json();
       if (!response.ok)
@@ -68,20 +68,20 @@ function Checkout({
           <Price cents={quotedAmount} decimals />
         </div>
         <Button onClick={onClose}>
-          Back to Stella <Icon name="heart" size={17} />
+          Back to {creator.name.split(" ")[0]} <Icon name="heart" size={17} />
         </Button>
       </div>
     );
   return (
     <form onSubmit={submit} className="checkout-form">
       <div className="checkout-creator">
-        <Avatar src={stella.image} name="Stella May" />
+        <Avatar src={creator.image} name={creator.name} />
         <div>
           <strong>
-            Stella May <span className="pink">✓</span>
+            {creator.name} {creator.verified && <span className="pink">✓</span>}
           </strong>
           <span>
-            <i className="online-dot" /> Usually replies in ~8 min
+            <i className="online-dot" /> Typical reply: {creator.responseTime}
           </span>
         </div>
         <Badge>Demo</Badge>
@@ -89,7 +89,7 @@ function Checkout({
       <p className="checkout-explanation">
         {offering.kind === "vip"
           ? "Your monthly pass to basic messaging and private posts. Paid requests are separate. This preview won’t start a subscription."
-          : "You're paying for a guaranteed reply. If Stella doesn't accept your request, you won't be charged."}
+          : `You’re paying for a guaranteed reply. If ${creator.name.split(" ")[0]} doesn’t accept your request, you won’t be charged.`}
       </p>
       {offering.kind !== "vip" && (
         <p className="promise-note">
@@ -115,7 +115,7 @@ function Checkout({
           >
             {[5, 10, 15, 30].map((value) => (
               <option key={value} value={value}>
-                {value} minutes · €{value * 3}
+                {value} minutes · €{(value * offering.cents) / 100}
               </option>
             ))}
           </select>
@@ -132,8 +132,8 @@ function Checkout({
             onChange={(event) => setMessage(event.target.value)}
             placeholder={
               offering.kind === "message"
-                ? "Hey Stella! I’d love to know…"
-                : "Tell Stella a little about your request…"
+                ? `Hey ${creator.name.split(" ")[0]}! I’d love to know…`
+                : "Tell us a little about your request…"
             }
             maxLength={2000}
             required
@@ -165,14 +165,47 @@ function Checkout({
     </form>
   );
 }
-export function CreatorProfile() {
+export function CreatorProfile({
+  creator: initial,
+}: {
+  creator: PublicCreator;
+}) {
+  const [demoImage, setDemoImage] = useState("");
+  useEffect(() => {
+    if (!initial.demo) return;
+    void Promise.resolve().then(() => {
+      try {
+        const draft = JSON.parse(
+          localStorage.getItem("replypass:creator") || "null",
+        );
+        if (
+          "@" + draft?.username === initial.handle &&
+          /^data:image\/(jpeg|png|webp);base64,/.test(draft.image)
+        )
+          setDemoImage(draft.image);
+      } catch {
+        /* Demo media is optional. */
+      }
+    });
+  }, [initial.demo, initial.handle]);
+  const creator = demoImage ? { ...initial, image: demoImage } : initial;
+  const { offerings, vip } = creator;
+  const firstName = creator.name.split(" ")[0];
+  const titles = {
+    message: `Message ${firstName}`,
+    live_chat: `Live chat with ${firstName}`,
+    voice_note: `A voice note from ${firstName}`,
+    photo: "Request a photo",
+    video: "Request a video",
+    vip: `Your ${firstName} VIP pass`,
+  };
   const [selected, setSelected] = useState<Offering | null>(null);
   const [shareStatus, setShareStatus] = useState("");
   async function share() {
     try {
       if (navigator.share)
         await navigator.share({
-          title: "Meet Stella May on Withahottie",
+          title: `Meet ${creator.name} on ReplyPass`,
           url: location.href,
         });
       else {
@@ -187,28 +220,33 @@ export function CreatorProfile() {
     <>
       <main id="main" className="profile-page">
         <div className="profile-breadcrumb">
-          <span>A little closer to your favorite people</span>
+          <span>A little closer to the people you follow.</span>
           <span>
             GOOD CONVERSATIONS START HERE <Icon name="heart" size={13} />
           </span>
         </div>
         <div className="profile-layout">
-          <section className="profile-intro" aria-label="About Stella">
+          <section
+            className="profile-intro"
+            aria-label={`About ${creator.name}`}
+          >
             <div className="hero-image">
               <Image
-                src={stella.image}
-                alt="Stella May smiling on a sunny Mediterranean terrace"
+                src={creator.image}
+                alt={`${creator.name} profile photo`}
                 fill
                 loading="eager"
+                unoptimized={creator.image.startsWith("http")}
                 sizes="(max-width: 760px) 100vw, 480px"
               />
               <div className="hero-topline">
                 <Badge className="online-badge">
-                  <i className="online-dot" /> Online now
+                  <i className={`status-dot ${creator.availability}`} />{" "}
+                  {creator.availability}
                 </Badge>
                 <button
                   className="share-button"
-                  aria-label="Share Stella’s profile"
+                  aria-label={`Share ${creator.name}’s profile`}
                   onClick={share}
                 >
                   <Icon name="share" size={18} />
@@ -229,33 +267,36 @@ export function CreatorProfile() {
             <div className="creator-details">
               <div className="name-row">
                 <h1>
-                  {stella.name}
-                  <span className="verified" aria-label="Verified creator">
-                    <Icon name="check" size={14} />
-                  </span>
+                  {creator.name}
+                  {creator.verified && (
+                    <span className="verified" aria-label="Verified creator">
+                      <Icon name="check" size={14} />
+                    </span>
+                  )}
                 </h1>
-                <span className="handle">{stella.handle}</span>
+                <span className="handle">{creator.handle}</span>
               </div>
               <div className="categories">
-                {stella.categories.map((category) => (
+                {creator.categories.map((category) => (
                   <span key={category}>{category}</span>
                 ))}
               </div>
-              <p className="bio">{stella.bio}</p>
+              <p className="bio">{creator.bio}</p>
               <div className="stats">
-                <CreatorStat value={`★ ${stella.rating}`} label="Fan rating" />
-                <CreatorStat value={stella.responseTime} label="Avg. reply" />
+                <CreatorStat value={`★ ${creator.rating}`} label="Fan rating" />
+                <CreatorStat value={creator.responseTime} label="Avg. reply" />
                 <CreatorStat
-                  value={stella.responseRate}
+                  value={creator.responseRate}
                   label="Response rate"
                 />
               </div>
               <p className="completed">
                 <Icon name="message" size={15} />
-                <strong>{stella.completedChats}</strong> completed chats. A lot
+                <strong>{creator.completedChats}</strong> completed chats. A lot
                 of happy hellos.
               </p>
             </div>
+            <SaveCreator creator={creator} />
             <div className="desktop-promise">
               <Icon name="shield" size={23} />
               <div>
@@ -266,7 +307,7 @@ export function CreatorProfile() {
           </section>
           <section
             className="interaction-column"
-            aria-label="Connect with Stella"
+            aria-label={`Connect with ${creator.name}`}
           >
             <div className="section-heading">
               <span className="eyebrow">MAKE A CONNECTION</span>
@@ -275,6 +316,11 @@ export function CreatorProfile() {
               </h2>
               <p>Big questions. Little hellos. I’m here for it.</p>
             </div>
+            {offerings.length === 0 && (
+              <p className="empty-inline">
+                Requests are paused. Check back soon.
+              </p>
+            )}
             <div className="offering-list">
               {offerings.map((offering, index) => (
                 <button
@@ -302,64 +348,78 @@ export function CreatorProfile() {
             <p className="payment-promise">
               <Icon name="shield" size={15} /> No reply = no charge. Always.
             </p>
-            <Card className="vip-card">
-              <div className="vip-top">
-                <Badge>
-                  <Icon name="sparkles" size={13} /> THE INNER CIRCLE
-                </Badge>
-                <Price cents={vip.cents} unit="/month" />
-              </div>
-              <h2>A little more us.</h2>
-              <p>
-                Unlimited/basic messaging and private posts.
-                <br />
-                Your all-access pass to my everyday.
-              </p>
-              <Button onClick={() => setSelected(vip)}>
-                Become VIP <Icon name="arrow" size={18} />
-              </Button>
-              <span className="vip-note">
-                Monthly membership · Cancel anytime
-              </span>
-            </Card>
-            <section
-              className="private-section"
-              aria-label="VIP content previews"
-            >
-              <div className="private-title">
-                <h3>
-                  Just between us <Icon name="lock" size={15} />
-                </h3>
-                <Badge>VIP ONLY</Badge>
-              </div>
-              <div className="preview-grid">
-                {["Life lately", "Behind the scenes", "A little getaway"].map(
-                  (title, index) => (
-                    <button
-                      className={`preview-tile preview-${index}`}
-                      key={title}
-                      onClick={() => setSelected(vip)}
-                      aria-label={`Unlock ${title} with VIP`}
-                    >
-                      <Image src={stella.image} alt="" fill sizes="160px" />
-                      <span className="preview-lock">
-                        <Icon name="lock" size={18} />
-                      </span>
-                      <span className="preview-label">{title}</span>
-                    </button>
-                  ),
-                )}
-              </div>
-              <p className="demo-caption">
-                Fictional creator · Demo media and activity
-              </p>
-            </section>
+            {vip && (
+              <>
+                <Card className="vip-card">
+                  <div className="vip-top">
+                    <Badge>
+                      <Icon name="sparkles" size={13} /> THE INNER CIRCLE
+                    </Badge>
+                    <Price cents={vip.cents} unit="/month" />
+                  </div>
+                  <h2>A little more us.</h2>
+                  <p>
+                    Unlimited/basic messaging and private posts.
+                    <br />
+                    Your all-access pass to my everyday.
+                  </p>
+                  <Button onClick={() => setSelected(vip)}>
+                    Become VIP <Icon name="arrow" size={18} />
+                  </Button>
+                  <span className="vip-note">
+                    Monthly membership · Cancel anytime
+                  </span>
+                </Card>
+                <section
+                  className="private-section"
+                  aria-label="VIP content previews"
+                >
+                  <div className="private-title">
+                    <h3>
+                      Just between us <Icon name="lock" size={15} />
+                    </h3>
+                    <Badge>VIP ONLY</Badge>
+                  </div>
+                  <div className="preview-grid">
+                    {[
+                      "Life lately",
+                      "Behind the scenes",
+                      "A little getaway",
+                    ].map((title, index) => (
+                      <button
+                        className={`preview-tile preview-${index}`}
+                        key={title}
+                        onClick={() => setSelected(vip)}
+                        aria-label={`Unlock ${title} with VIP`}
+                      >
+                        <Image
+                          src={creator.image}
+                          alt=""
+                          fill
+                          sizes="160px"
+                          unoptimized={creator.image.startsWith("http")}
+                        />
+                        <span className="preview-lock">
+                          <Icon name="lock" size={18} />
+                        </span>
+                        <span className="preview-label">{title}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="demo-caption">
+                    {creator.demo
+                      ? "Fictional creator · Demo media and activity"
+                      : "Preview media · Payments are not yet enabled"}
+                  </p>
+                </section>
+              </>
+            )}
           </section>
         </div>
         <footer className="profile-footer">
           <span>Real attention. A little connection.</span>
           <span>
-            withahottie<span className="pink">.</span>
+            replypass<span className="pink">.</span>
           </span>
         </footer>
       </main>
@@ -373,6 +433,7 @@ export function CreatorProfile() {
           <Checkout
             key={selected.kind}
             offering={selected}
+            creator={creator}
             onClose={() => setSelected(null)}
           />
         )}

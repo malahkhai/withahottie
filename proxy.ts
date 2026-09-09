@@ -25,5 +25,5 @@ export async function proxy(request: NextRequest) {
 }
 // Only auth-related routes need session refresh in this foundation.
 export const config = {
-  matcher: ["/login", "/signup", "/creator/:path*", "/auth/:path*"],
+  matcher: ["/login", "/signup", "/creator/:path*", "/account/:path*", "/api/:path*", "/auth/:path*"],
 };

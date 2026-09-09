@@ -1,4 +1,4 @@
--- Withahottie V1. Money is integer minor units. UTC timestamps throughout.
+-- ReplyPass V1. Money is integer minor units. UTC timestamps throughout.
 begin;
 create extension if not exists pgcrypto;
 create type public.user_role as enum ('fan', 'creator', 'admin');

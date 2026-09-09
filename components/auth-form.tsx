@@ -8,43 +8,48 @@ import { Icon } from "./icon";
 export function AuthForm({
   mode,
   configured,
+  next = "/account",
 }: {
-  mode: "login" | "signup" | "apply";
+  mode: "login" | "signup";
   configured: boolean;
+  next?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
+  async function demo(role: "fan" | "creator") {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/auth/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      router.push(next === "/creator/apply" ? next : data.next);
+      router.refresh();
+    } catch {
+      setError("Could not start the demo. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setBusy(true);
     setError("");
-    setFeedback("");
-    const form = new FormData(event.currentTarget);
-    if (!configured) {
-      setFeedback(
-        mode === "apply"
-          ? "Application preview complete. Nothing was submitted. Creator applications will open when the platform is connected."
-          : "You’re exploring the demo. No account was created or signed in. Visit Stella to try the experience.",
-      );
-      return;
-    }
-    // Applications are a UI preview until an approved moderation workflow exists.
-    if (mode === "apply") {
-      setFeedback(
-        "Creator applications are not open yet. This preview has not submitted your information.",
-      );
-      return;
-    }
+    const data = new FormData(event.currentTarget);
     const supabase = createClient();
     if (!supabase) {
-      setError("Authentication is unavailable. Please try again later.");
+      setBusy(false);
       return;
     }
-    setBusy(true);
     try {
-      const email = String(form.get("email")).trim();
-      const password = String(form.get("password"));
+      const email = String(data.get("email")).trim();
+      const password = String(data.get("password"));
       const result =
         mode === "login"
           ? await supabase.auth.signInWithPassword({ email, password })
@@ -52,60 +57,41 @@ export function AuthForm({
               email,
               password,
               options: {
-                data: { display_name: String(form.get("name")).trim() },
-                emailRedirectTo: `${location.origin}/auth/callback`,
+                data: { display_name: String(data.get("name")).trim() },
+                emailRedirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
               },
             });
       if (result.error) throw result.error;
-      if (mode === "login" || result.data.session) {
-        router.push("/@stella");
+      if (result.data.session) {
+        router.push(`/auth/continue?next=${encodeURIComponent(next)}`);
         router.refresh();
       } else
         setFeedback(
-          "Check your email to confirm your account, then come say hello.",
+          "Check your email to confirm your account. Your creator setup will be waiting here.",
         );
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to sign in. Please try again.",
-      );
+      setError(error instanceof Error ? error.message : "Please try again.");
     } finally {
       setBusy(false);
     }
   }
   return (
     <>
-      <form onSubmit={submit} className="auth-form">
-        {mode !== "login" && (
-          <label htmlFor="name">
-            Your name
-            <input
-              id="name"
-              name="name"
-              autoComplete="name"
-              maxLength={80}
-              required
-              placeholder="Your name"
-            />
+      {configured ? (
+        <form onSubmit={submit} className="auth-form">
+          {mode === "signup" && (
+            <label>
+              Your name
+              <input name="name" autoComplete="name" maxLength={80} required />
+            </label>
+          )}
+          <label>
+            Email address
+            <input name="email" type="email" autoComplete="email" required />
           </label>
-        )}
-        <label htmlFor="email">
-          Email address
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="you@example.com"
-          />
-        </label>
-        {mode !== "apply" && (
-          <label htmlFor="password">
+          <label>
             Password
             <input
-              id="password"
               name="password"
               type="password"
               autoComplete={
@@ -114,73 +100,63 @@ export function AuthForm({
               minLength={mode === "signup" ? 12 : 1}
               maxLength={128}
               required
-              placeholder={
-                mode === "signup" ? "At least 12 characters" : "Your password"
-              }
             />
+            {mode === "signup" && (
+              <span className="field-hint">At least 12 characters.</span>
+            )}
           </label>
-        )}
-        {mode === "apply" && (
-          <>
-            <label htmlFor="social">
-              Your social profile
-              <input
-                id="social"
-                name="social"
-                type="url"
-                required
-                placeholder="https://instagram.com/you"
-              />
-            </label>
-            <label htmlFor="about">
-              Tell us about your community
-              <textarea
-                id="about"
-                name="about"
-                maxLength={2000}
-                required
-                rows={3}
-                placeholder="What do you love sharing?"
-              />
-            </label>
-          </>
-        )}
-        {(!configured || mode === "apply") && (
+          <Button disabled={busy}>
+            {busy
+              ? "One moment…"
+              : mode === "login"
+                ? "Log in"
+                : "Create account"}
+            <Icon name="arrow" size={18} />
+          </Button>
+        </form>
+      ) : (
+        <div className="demo-auth">
           <div className="demo-notice">
-            {mode === "apply"
-              ? "Application preview. Your details won’t be saved or submitted yet."
-              : "Demo mode. You can explore without an account. Login and signup will be enabled when authentication is connected."}
+            <strong>Explore ReplyPass</strong>
+            <p>
+              Local demo mode. No real account or password is needed. Your demo
+              session stays in this browser.
+            </p>
           </div>
-        )}
-        {error && (
-          <p role="alert" className="form-error">
-            {error}
-          </p>
-        )}
-        <Button disabled={busy} type="submit">
-          {busy
-            ? "One moment…"
-            : mode === "login"
-              ? "Log in"
-              : mode === "signup"
-                ? "Create account"
-                : "Preview application"}
-          <Icon name="arrow" size={18} />
-        </Button>
-        {feedback && (
-          <div role="status" className="form-success">
-            {feedback} <Link href="/@stella">Meet Stella →</Link>
-          </div>
-        )}
-      </form>
+          <Button disabled={busy} onClick={() => demo("creator")}>
+            Explore creator demo <Icon name="arrow" size={18} />
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => demo("fan")}
+          >
+            Explore fan demo
+          </Button>
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="form-error">
+          {error}
+        </p>
+      )}
+      {feedback && (
+        <p role="status" className="form-success">
+          {feedback}
+        </p>
+      )}
       <p className="auth-switch">
         {mode === "login" ? (
           <>
-            New here? <Link href="/signup">Join Withahottie</Link>
+            New here?{" "}
+            <Link href={`/signup?next=${encodeURIComponent(next)}`}>
+              Join ReplyPass
+            </Link>
           </>
         ) : (
           <>
-            Already part of the club? <Link href="/login">Log in</Link>
+            Already here?{" "}
+            <Link href={`/login?next=${encodeURIComponent(next)}`}>Log in</Link>
           </>
         )}
       </p>

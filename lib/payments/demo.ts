@@ -7,7 +7,7 @@ const prices: Record<InteractionKind, number> = {
   video: 3000,
   vip: 1900,
 };
-export function demoQuote(input: unknown) {
+export function demoQuote(input: unknown, serverPrice?: number) {
   if (!input || typeof input !== "object") return null;
   const { kind, message, minutes } = input as Record<string, unknown>;
   if (typeof kind !== "string" || !Object.hasOwn(prices, kind)) return null;
@@ -24,7 +24,7 @@ export function demoQuote(input: unknown) {
   const duration = kind === "live_chat" ? (minutes as number) : 1;
   return {
     mode: "demo" as const,
-    amountCents: prices[kind as InteractionKind] * duration,
+    amountCents: (serverPrice ?? prices[kind as InteractionKind]) * duration,
     currency: "eur" as const,
     charged: false as const,
   };

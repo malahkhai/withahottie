@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findCreator } from "@/lib/creators/repository";
 import { demoQuote } from "@/lib/payments/demo";
 export async function POST(request: Request) {
   // Stateless: no Stripe calls, financial records or charges.
@@ -14,7 +15,21 @@ export async function POST(request: Request) {
   if (raw.length > 10000)
     return NextResponse.json({ error: "Request too large." }, { status: 413 });
   try {
-    const quote = demoQuote(JSON.parse(raw));
+    const input = JSON.parse(raw);
+    const creator = await findCreator(
+      typeof input?.handle === "string" ? input.handle : "@stella",
+    );
+    const offering = creator
+      ? [...creator.offerings, ...(creator.vip ? [creator.vip] : [])].find(
+          (p) => p.kind === input.kind,
+        )
+      : null;
+    if (!offering)
+      return NextResponse.json(
+        { error: "This offering is unavailable." },
+        { status: 400 },
+      );
+    const quote = demoQuote(input, offering.cents);
     if (!quote)
       return NextResponse.json(
         { error: "Check your request and try again." },
