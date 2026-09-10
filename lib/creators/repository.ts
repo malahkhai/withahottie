@@ -105,7 +105,8 @@ export async function findCreator(raw: string): Promise<PublicCreator | null> {
       .eq("onboarding_complete", true)
       .maybeSingle();
     if (error) throw error;
-    if (!row) return null;
+    // Keep the fictional showcase available on a healthy, newly configured database.
+    if (!row) return username === "stella" ? demoStella : null;
     const [
       { data: profile, error: pError },
       { data: prices, error: priceError },
