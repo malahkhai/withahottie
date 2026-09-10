@@ -16,7 +16,7 @@ Migration 006 disables existing Guaranteed Reply pricing until payout eligibilit
 
 ## 2. Vercel and domain
 
-1. Import `malahkhai/withahottie` from GitHub into a Vercel project named `replypass`. Use Next.js, repository root, Node.js 22.x, `npm ci`, and `npm run build`.
+1. Import `malahkhai/Replypass` from GitHub into a Vercel project named `replypass`. Use Next.js, repository root, Node.js 22.x, `npm ci`, and `npm run build`.
 2. Add `NEXT_PUBLIC_APP_URL=https://getreplypass.com` and the three Supabase variables. For an initial non-payment deployment, leave **all Stripe variables absent**. Add the entire Stripe configuration together in step 3; partial configuration intentionally fails the build.
 3. Add `getreplypass.com` in Vercel's domain settings. At your registrar/DNS provider, enter the exact DNS records Vercel provides. Wait for domain verification and HTTPS. The visible product name is ReplyPass.
 4. The committed `vercel.json` runs `/api/cron/payments` every five minutes. This requires Vercel Pro/Enterprise; Hobby rejects sub-daily schedules. For Hobby, remove the cron entry and provide an external trusted scheduler with the same frequency before testing expiration. Do not replace it with a daily financial reconciliation job. [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).

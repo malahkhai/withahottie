@@ -142,7 +142,7 @@ The product is **ReplyPass**; `getreplypass.com` is its domain, not a different 
 
 Creator canonical/share URLs use `https://getreplypass.com/@username`. `lib/metadata.ts` supplies per-page social/canonical metadata; `/og` generates a local 1200×630 text-based PNG with no external font/image requests. Replace its artwork in `app/og/route.tsx` when approved. The existing SVG favicon remains in place. Draft trust pages live at `/terms`, `/privacy`, `/community-guidelines`, and `/creator-terms`, with footer links and noindex metadata. They require review and completion before public launch.
 
-Attach `getreplypass.com` to the Vercel project and configure the DNS records Vercel provides; no DNS or domain ownership changes were made in this task. GitHub still uses the legacy repository name. Rename it manually to `replypass` if desired, then update origin to the URL GitHub reports. The existing remote is intentionally preserved.
+Attach `getreplypass.com` to the Vercel project and configure the DNS records Vercel provides; no DNS or domain ownership changes were made in this task. GitHub confirmed the repository is now `malahkhai/Replypass`. The local origin uses `https://github.com/malahkhai/Replypass.git`; no manual repository rename is needed.
 
 Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Documents folder is an iCloud source mirror and may be evicted. See `docs/payment-readiness.md` for the implemented security boundaries and `docs/setup.md` for configuration. Draft policies are not final.
 
