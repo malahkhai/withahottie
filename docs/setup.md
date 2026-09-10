@@ -19,7 +19,13 @@ Migration 006 disables existing Guaranteed Reply pricing until payout eligibilit
 1. Import `malahkhai/Replypass` from GitHub into a Vercel project named `replypass`. Use Next.js, repository root, Node.js 22.x, `npm ci`, and `npm run build`.
 2. Add `NEXT_PUBLIC_APP_URL=https://getreplypass.com` and the three Supabase variables. For an initial non-payment deployment, leave **all Stripe variables absent**. Add the entire Stripe configuration together in step 3; partial configuration intentionally fails the build.
 3. Add `getreplypass.com` in Vercel's domain settings. At your registrar/DNS provider, enter the exact DNS records Vercel provides. Wait for domain verification and HTTPS. The visible product name is ReplyPass.
-4. The committed `vercel.json` runs `/api/cron/payments` every five minutes. This requires Vercel Pro/Enterprise; Hobby rejects sub-daily schedules. For Hobby, remove the cron entry and provide an external trusted scheduler with the same frequency before testing expiration. Do not replace it with a daily financial reconciliation job. [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
+4. The committed `vercel.json` has no cron schedule so it does not trigger Hobby's sub-daily cron deployment rejection. Before enabling Stripe test payments, configure a trusted external scheduler to call `GET /api/cron/payments` every five minutes with `Authorization: Bearer <CRON_SECRET>`, or use Pro/Enterprise and restore the Vercel cron configuration below. Verify successful executions before starting payment tests. A daily schedule is not sufficient. [Vercel cron limits](https://vercel.com/docs/cron-jobs/usage-and-pricing). Hobby is restricted to personal, non-commercial use; a commercial ReplyPass deployment needs an appropriate plan or host, regardless of scheduler choice. [Vercel plan rules](https://vercel.com/docs/plans/hobby).
+
+   For Pro/Enterprise, use this `vercel.json`:
+   ```json
+   {"crons":[{"path":"/api/cron/payments","schedule":"*/5 * * * *"}]}
+   ```
+
 5. Set `CRON_SECRET` to a random value of at least 32 characters. Vercel supplies it as a bearer token to cron requests. Do not expose this value in the browser. Local cron is not automatic.
 6. Redeploy whenever public environment values change. Check `/@stella`, `/signup`, email confirmation, `/creator/apply`, `/creator/payouts`, `/creator/requests` and `/account/requests`.
 
