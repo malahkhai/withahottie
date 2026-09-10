@@ -148,4 +148,15 @@ Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Docu
 
 ## Task 3 validation
 
-`tests/secured-payments.test.ts` uses a mocked Stripe provider for holds, declines, expiry, capture/transfer retries, signatures and idempotency. SQL suites cover permissions, ownership, immutable prices and fulfillment claims; `tests/db-concurrency.py` uses concurrent database connections. `tests/stripe-browser.mjs` mocks Stripe.js and checkout responses to verify the Payment Element UI contract, insufficient funds, retry identity and server-confirmed success. It requires a build with coherent **fake** test credentials; see its header. The ordinary browser suite requires credentials absent. No automated test sends money or establishes hosted service readiness.
+`tests/secured-payments.test.ts` uses a mocked Stripe provider for holds, declines, expiry, capture/transfer retries, signatures and idempotency. SQL suites cover permissions, ownership, immutable prices and fulfillment claims; `tests/db-concurrency.py` uses concurrent database connections. `tests/stripe-browser.mjs` mocks Stripe.js and checkout responses to verify the Payment Element UI contract, insufficient funds, retry identity and server-confirmed success. It requires a test-configured app and `TEST_CREATOR_HANDLE` identifying a published, non-demo creator with Guaranteed Reply enabled; see its header. The ordinary browser suite requires credentials absent. No automated test sends money or establishes hosted service readiness.
+
+## Creator-led acquisition and navigation
+
+- `/` is the detailed platform homepage for organic visitors. `/creators` is the creator recruitment landing page for ads. Both offer creator onboarding and existing-account login, with no generic fan signup CTA.
+- Fans arrive at `/@username`. The profile logo returns to that same profile; the footer's About ReplyPass link opens `/`. Fan conversations include a back-to-creator link where a published creator is available.
+- `/signup` without a valid creator destination or `/creator/apply` shows entry guidance instead of a signup form. Creator-linked signup validates that the public profile resolves. This controls the product journey; Supabase authentication itself remains enabled.
+- Authentication carries an allowlisted `next` path such as `/@username?interaction=message`. Login, confirmation and account continuation preserve that destination rather than sending everyone to a dashboard.
+- Request text is retained in tab-local session storage for up to 24 hours, scoped to creator and interaction, never in URLs or auth metadata. It is restored when the request reopens after login/signup. This does not sync drafts between browsers/devices; when email confirmation opens elsewhere, return and log in in the original tab. No payment is submitted automatically after authentication.
+- Stella remains explicitly demo data and cannot enter Stripe checkout. The landing pages distinguish test-mode Guaranteed Reply from upcoming paid formats.
+
+Run `tests/marketing-browser.mjs` with the same external Playwright/Chrome environment as the other browser tests. It covers both landing pages, no-context signup, creator logo behavior, About navigation, draft restoration and mobile/desktop overflow.

@@ -1,5 +1,6 @@
 // Isolated UI contract test: Stripe.js and checkout HTTP responses are mocked by Playwright.
-// Run against a build with coherent fake TEST credentials; never points at Stripe/Supabase.
+// Run against a test-configured app and set TEST_CREATOR_HANDLE to a real published creator
+// with Guaranteed Reply enabled. Stripe.js and payment endpoints are intercepted; no payment is sent.
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 import os from "node:os";
@@ -68,7 +69,7 @@ try {
   );
   const base = process.env.TEST_APP_URL || "http://127.0.0.1:3004";
   async function open() {
-    await page.goto(base + "/@stella");
+    await page.goto(base + "/@" + (process.env.TEST_CREATOR_HANDLE || "stella"));
     await page.getByRole("button", { name: /Message me/ }).click();
     await page
       .getByRole("textbox", { name: "What do you want to say?" })

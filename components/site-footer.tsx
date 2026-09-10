@@ -13,6 +13,7 @@ export function SiteFooter() {
         {siteConfig.name} · {siteConfig.tagline}
       </p>
       <nav aria-label="Legal and community">
+        <Link href="/">About ReplyPass</Link>
         {trustLinks.map(([href, label]) => (
           <Link key={href} href={href}>
             {label}

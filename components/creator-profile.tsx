@@ -1,6 +1,8 @@
 "use client";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import {SecuredCheckout} from "./secured-checkout";
+import { useRequestDraft } from "./request-draft";
+import { SecuredCheckout } from "./secured-checkout";
 import { creatorUrl, siteConfig } from "@/lib/site";
 import { useState, useEffect } from "react";
 import type { PublicCreator } from "@/types/creator";
@@ -15,12 +17,18 @@ function Checkout({
   offering,
   creator,
   onClose,
+  authenticated,
 }: {
   offering: Offering;
   creator: PublicCreator;
   onClose: () => void;
+  authenticated: boolean;
 }) {
-  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const { message, setMessage, clearDraft } = useRequestDraft(
+    creator.handle,
+    offering.kind,
+  );
   const [minutes, setMinutes] = useState(5);
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
@@ -28,6 +36,12 @@ function Checkout({
   const total = offering.cents * (offering.kind === "live_chat" ? minutes : 1);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!authenticated && !creator.demo) {
+      router.push(
+        `/login?next=${encodeURIComponent(`/${creator.handle}?interaction=${offering.kind}`)}`,
+      );
+      return;
+    }
     setError("");
     setState("loading");
     try {
@@ -47,6 +61,7 @@ function Checkout({
           result.error || "Something went wrong. Please try again.",
         );
       setQuotedAmount(result.amountCents);
+      clearDraft();
       setState("done");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Please try again.");
@@ -168,9 +183,15 @@ function Checkout({
   );
 }
 export function CreatorProfile({
-  creator: initial, paymentsEnabled = false,
+  creator: initial,
+  paymentsEnabled = false,
+  authenticated = false,
+  initialInteraction,
 }: {
-  creator: PublicCreator; paymentsEnabled?: boolean;
+  creator: PublicCreator;
+  paymentsEnabled?: boolean;
+  authenticated?: boolean;
+  initialInteraction?: string;
 }) {
   const [demoImage, setDemoImage] = useState("");
   useEffect(() => {
@@ -201,7 +222,12 @@ export function CreatorProfile({
     video: "Request a video",
     vip: `Your ${firstName} VIP pass`,
   };
-  const [selected, setSelected] = useState<Offering | null>(null);
+  const [selected, setSelected] = useState<Offering | null>(
+    () =>
+      [...initial.offerings, ...(initial.vip ? [initial.vip] : [])].find(
+        (o) => o.kind === initialInteraction,
+      ) || null,
+  );
   const [shareStatus, setShareStatus] = useState("");
   async function share() {
     try {
@@ -421,24 +447,29 @@ export function CreatorProfile({
         <footer className="profile-footer">
           <span>Real attention. A little connection.</span>
           <span>
-            {siteConfig.logo}<span className="pink">.</span>
+            {siteConfig.logo}
+            <span className="pink">.</span>
           </span>
         </footer>
       </main>
-      <BottomNavigation />
+      <BottomNavigation handle={creator.handle} />
       <BottomSheet
         open={!!selected}
         onClose={() => setSelected(null)}
         title={selected ? titles[selected.kind] : ""}
       >
-        {selected && (paymentsEnabled && selected.kind === "message" ? <SecuredCheckout creator={creator}/> :
-          <Checkout
-            key={selected.kind}
-            offering={selected}
-            creator={creator}
-            onClose={() => setSelected(null)}
-          />
-        )}
+        {selected &&
+          (paymentsEnabled && selected.kind === "message" ? (
+            <SecuredCheckout creator={creator} authenticated={authenticated} />
+          ) : (
+            <Checkout
+              authenticated={authenticated}
+              key={selected.kind}
+              offering={selected}
+              creator={creator}
+              onClose={() => setSelected(null)}
+            />
+          ))}
       </BottomSheet>
     </>
   );

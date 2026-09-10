@@ -17,6 +17,9 @@ export async function GET(request: Request) {
       );
   }
   return NextResponse.redirect(
-    new URL("/login?error=confirmation", url.origin),
+    new URL(
+      `/login?error=confirmation&next=${encodeURIComponent(safeNext(url.searchParams.get("next")))}`,
+      url.origin,
+    ),
   );
 }

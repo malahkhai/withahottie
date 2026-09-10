@@ -1,4 +1,6 @@
 "use client";
+import { useRouter } from "next/navigation";
+import { useRequestDraft } from "./request-draft";
 import { useState } from "react";
 import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
@@ -20,13 +22,26 @@ type Quote = {
   amountCents: number;
   currency: string;
 };
-export function SecuredCheckout({ creator }: { creator: PublicCreator }) {
-  const [message, setMessage] = useState("");
+export function SecuredCheckout({
+  creator,
+  authenticated,
+}: {
+  creator: PublicCreator;
+  authenticated: boolean;
+}) {
+  const router = useRouter();
+  const { message, setMessage } = useRequestDraft(creator.handle, "message");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function prepare(e: React.FormEvent) {
     e.preventDefault();
+    if (!authenticated) {
+      router.push(
+        `/login?next=${encodeURIComponent(`/${creator.handle}?interaction=message`)}`,
+      );
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -110,7 +125,12 @@ export function SecuredCheckout({ creator }: { creator: PublicCreator }) {
       )}
       {error && (
         <p className="form-error" role="alert">
-          {error} <Link href="/login">Sign in</Link>
+          {error}{" "}
+          <Link
+            href={`/login?next=${encodeURIComponent(`/${creator.handle}?interaction=message`)}`}
+          >
+            Sign in
+          </Link>
         </p>
       )}
       <p className="checkout-footnote">

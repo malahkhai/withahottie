@@ -1,6 +1,6 @@
-import { stripeConfig } from '@/lib/stripe/config';
-import { paymentBackend } from '@/lib/stripe/server';
-import type {ReplyPayment} from '@/lib/stripe/engine';
+import { stripeConfig } from "@/lib/stripe/config";
+import { paymentBackend } from "@/lib/stripe/server";
+import type { ReplyPayment } from "@/lib/stripe/engine";
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { creatorForUser } from "@/lib/creators/repository";
@@ -85,10 +85,14 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       (s) => s.fan_id === p.id && s.status === "active",
     ),
   }));
-  let secured:ReplyPayment[]=[];
-  if(stripeConfig() && interactionIds.length) {
-    const {data,error}=await paymentBackend().db.from('reply_payments').select('*').in('interaction_id',interactionIds);
-    if(error)throw Error('Payment context unavailable.');secured=data||[];
+  let secured: ReplyPayment[] = [];
+  if (stripeConfig() && interactionIds.length) {
+    const { data, error } = await paymentBackend()
+      .db.from("reply_payments")
+      .select("*")
+      .in("interaction_id", interactionIds);
+    if (error) throw Error("Payment context unavailable.");
+    secured = data || [];
   }
   const requestRows: CreatorRequest[] = (requests || []).map((r) => {
     const p = interactions!.find((p) => p.id === r.interaction_id)!;
@@ -102,8 +106,12 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       conversationId: p.conversation_id,
       currency: p.currency,
       status: r.status === "fulfilled" ? "completed" : r.status,
-      paymentStatus: secured.find(x=>x.interaction_id===p.id)?.payment_state || p.status,
-      needsReconciliation: secured.find(x=>x.interaction_id===p.id)?.needs_reconciliation || false,
+      paymentStatus:
+        secured.find((x) => x.interaction_id === p.id)?.payment_state ||
+        p.status,
+      needsReconciliation:
+        secured.find((x) => x.interaction_id === p.id)?.needs_reconciliation ||
+        false,
       expires_at: r.expires_at,
       accepted_at: r.accepted_at,
       declined_at: r.declined_at,
@@ -127,6 +135,16 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       if (!error && data) attachmentUrls.set(m.message_id, data.signedUrl);
     }),
   );
+  const participantIds = [
+    ...new Set((allMembers || []).map((m) => m.profile_id)),
+  ];
+  const { data: participantCreators } = participantIds.length
+    ? await supabase
+        .from("creator_profiles")
+        .select("profile_id,handle")
+        .in("profile_id", participantIds)
+        .eq("onboarding_complete", true)
+    : { data: [] };
   const conversations = conversationIds.map((id) => {
     const other = allMembers?.find(
       (m) => m.conversation_id === id && m.profile_id !== viewer.id,
@@ -138,11 +156,31 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
     return {
       id,
       fanId: other?.profile_id || viewer.id,
+      creatorHandle: participantCreators?.find((c) =>
+        allMembers?.some(
+          (m) => m.conversation_id === id && m.profile_id === c.profile_id,
+        ),
+      )?.handle,
       unread: msgs.filter(
         (m) =>
           m.sender_id !== viewer.id && (!lastRead || m.created_at > lastRead),
       ).length,
-      context: (()=>{const p=secured.find(p=>p.conversation_id===id);if(!p)return 'Private conversation';const money=(cents:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:p.currency}).format(cents/100);if(p.needs_reconciliation)return 'Reply saved · Payment being checked';return p.payment_state==='captured'?`Reply completed · ${money(p.creator_cents)} earned`:p.payment_state==='authorized'?`${money(p.gross_cents)} secured · Reply to earn ${money(p.creator_cents)}`:'Reservation released or under review';})(),
+      context: (() => {
+        const p = secured.find((p) => p.conversation_id === id);
+        if (!p) return "Private conversation";
+        const money = (cents: number) =>
+          new Intl.NumberFormat("en-GB", {
+            style: "currency",
+            currency: p.currency,
+          }).format(cents / 100);
+        if (p.needs_reconciliation)
+          return "Reply saved · Payment being checked";
+        return p.payment_state === "captured"
+          ? `Reply completed · ${money(p.creator_cents)} earned`
+          : p.payment_state === "authorized"
+            ? `${money(p.gross_cents)} secured · Reply to earn ${money(p.creator_cents)}`
+            : "Reservation released or under review";
+      })(),
       messages: msgs.map((m) => ({
         id: m.id,
         senderId: m.sender_id,
@@ -163,7 +201,11 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       .filter((p) =>
         (p.captured_at || p.completed_at || p.created_at).startsWith(day),
       )
-      .reduce((sum, p) => sum + (p.creator_cents ?? splitPayment(p.amount_cents).creatorCents), 0);
+      .reduce(
+        (sum, p) =>
+          sum + (p.creator_cents ?? splitPayment(p.amount_cents).creatorCents),
+        0,
+      );
   });
   return {
     demo: false,

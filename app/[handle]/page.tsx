@@ -1,4 +1,5 @@
-import {stripeConfig} from '@/lib/stripe/config';
+import { getViewer } from "@/lib/auth/session";
+import { stripeConfig } from "@/lib/stripe/config";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/metadata";
 import { siteConfig } from "@/lib/site";
@@ -24,10 +25,13 @@ export async function generateMetadata({
 }
 export default async function Profile({
   params,
+  searchParams,
 }: {
   params: Promise<{ handle: string }>;
+  searchParams: Promise<{ interaction?: string }>;
 }) {
   const { handle } = await params;
+  const { interaction } = await searchParams;
   let decoded = "";
   try {
     decoded = decodeURIComponent(handle);
@@ -37,5 +41,13 @@ export default async function Profile({
   if (!decoded.startsWith("@")) notFound();
   const creator = await findCreator(handle);
   if (!creator) notFound();
-  return <CreatorProfile creator={creator} paymentsEnabled={!!stripeConfig()} />;
+  return (
+    <CreatorProfile
+      key={`${handle}:${interaction || ""}`}
+      initialInteraction={interaction}
+      creator={creator}
+      authenticated={!!(await getViewer())}
+      paymentsEnabled={!!stripeConfig() && !creator.demo}
+    />
+  );
 }

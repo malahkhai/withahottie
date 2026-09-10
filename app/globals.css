@@ -3135,3 +3135,45 @@ body:has(.workspace-shell) > .site-header {
 .draft-notice { border: 1px solid #dbdfd3; background: #f0f2e9; border-radius: 20px; padding: 24px; }
 .draft-notice strong { display: block; margin-bottom: 8px; }
 body:has(.workspace-shell) > .site-footer { display: none; }
+
+/* Public discovery and creator acquisition. Profile pages keep their own layout. */
+.marketing {max-width:1200px;margin:0 auto;padding:0 28px;color:var(--ink,#252b26)}
+.marketing h1,.marketing h2,.marketing h3 {letter-spacing:-.055em;line-height:1.04;margin:0;font-weight:600}
+.marketing h1 {display:block;font-size:clamp(44px,5.7vw,76px)}
+.marketing h2 {font-size:clamp(34px,4.2vw,52px)}
+.marketing h3 {font-size:23px;letter-spacing:-.035em}
+.marketing p {line-height:1.7;color:#686e65}
+.marketing .eyebrow {font-size:11px;line-height:1.5;letter-spacing:.18em;font-weight:700;color:#aa483c;margin:0 0 22px}
+.marketing-hero {display:grid;grid-template-columns:1.15fr 1fr;gap:70px;align-items:center;padding:80px 0 70px}
+.marketing-copy h1 span,.marketing-promise h2 span {color:#d74d42}
+.marketing-lead {max-width:490px;margin:26px 0;font-size:17px}
+.marketing-actions {display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin:30px 0 16px}
+.marketing-actions>a:last-child {font-size:14px;text-decoration:underline;text-underline-offset:6px;min-height:44px;display:inline-flex;align-items:center}
+.marketing .button {display:inline-flex;align-items:center;justify-content:center;gap:24px;text-decoration:none;min-height:54px;padding:16px 24px;border-radius:100px;font-weight:650}
+.marketing .marketing-note {font-size:12px;max-width:410px}
+.marketing-showcase {padding:16px;background:#f0f0e8;border-radius:32px;transform:rotate(1deg)}
+.showcase-photo {height:400px;position:relative;border-radius:23px;overflow:hidden}
+.showcase-photo img {object-fit:cover;object-position:center 35%}
+.showcase-photo:after {content:"";position:absolute;inset:50% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.showcase-label {position:absolute;top:16px;left:16px;z-index:1;padding:8px 12px;border-radius:30px;background:#fffaf0;font-size:9px;font-weight:700;letter-spacing:.12em}
+.showcase-name {position:absolute;z-index:1;bottom:25px;left:25px;color:white;font-size:30px;letter-spacing:-.04em}
+.showcase-name span {display:block;font-size:13px;letter-spacing:0;margin-top:4px}
+.showcase-message {position:relative;background:white;padding:23px;border-radius:20px;margin:-16px 12px 0;z-index:2;box-shadow:0 6px 25px #252b2608}
+.marketing .showcase-message .eyebrow {font-size:9px;margin-bottom:8px}
+.marketing .showcase-message p {font-size:19px;line-height:1.4;letter-spacing:-.03em;color:#252b26;margin:0 0 18px}
+.showcase-message>div {border-top:1px solid #eeeee7;padding-top:14px;font-size:10px;display:flex;justify-content:space-between;gap:10px;color:#72796b}
+.showcase-message strong {color:#5e754a}
+.showcase-link {display:flex;justify-content:space-between;padding:20px 20px 7px;font-size:12px;min-height:44px}
+.marketing-strip {display:flex;justify-content:space-between;align-items:center;border-block:1px solid #e2e4db;padding:28px 0;gap:40px}
+.marketing-strip p {margin:0;font-size:13px;min-width:220px}.marketing-strip strong {color:#252b26;font-weight:500}
+.marketing-strip>div {max-width:610px;font-size:17px;line-height:1.9;letter-spacing:-.02em;color:#697b5b}
+.marketing-section {padding:85px 0;scroll-margin-top:30px}.marketing-section-heading {max-width:550px;margin-bottom:36px}.marketing-section-heading>p:last-child {font-size:15px;margin:22px 0 0}
+.marketing-steps {display:grid;grid-template-columns:repeat(3,1fr);gap:24px}.marketing-steps article {padding:28px 24px;border:1px solid #e4e5dd;border-radius:23px;background:#fff}.marketing-steps article>span {display:block;font-size:11px;color:#9b6958;margin-bottom:34px}.marketing-steps p {font-size:14px;margin-bottom:0}
+.marketing-promise {background:#282f28;color:#fff;padding:50px;border-radius:28px;display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}.marketing .marketing-promise .eyebrow {color:#bcc8a9}.marketing .marketing-promise p:not(.eyebrow) {color:#d6dccf;font-size:15px}.marketing-status {display:inline-block;border:1px solid #5d6757;color:#d0dabc;border-radius:30px;padding:9px 13px;font-size:11px;margin-top:10px}
+.marketing-offers {display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.marketing-offers article {padding:26px;background:#f0f1e9;border-radius:22px}.marketing-offer-icon {font-size:25px;color:#7e8d68}.marketing-offers small {display:block;font-size:9px;letter-spacing:.13em;margin:25px 0 12px;color:#697b5b}.marketing-offers h3 {font-size:22px}.marketing-offers p {font-size:13px;margin-bottom:0}
+.marketing-creator {display:grid;grid-template-columns:1fr 1fr;gap:70px;padding:60px 0;border-block:1px solid #e2e4db;scroll-margin-top:30px}.marketing-creator>div>p:not(.eyebrow) {margin:25px 0;font-size:15px}.marketing-creator ol {counter-reset:steps;list-style:none;padding:0;margin:0}.marketing-creator li {position:relative;padding:0 0 24px 50px;counter-increment:steps}.marketing-creator li:before {content:counter(steps);position:absolute;left:0;top:0;width:30px;height:30px;background:#ebeee3;display:grid;place-items:center;border-radius:50%;font-size:12px;color:#64774d}.marketing-creator strong {font-size:18px;font-weight:550}.marketing-creator li p {font-size:13px;margin:7px 0 0}
+.marketing-fees {padding:80px 0;display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}.marketing-fees>div>p:not(.eyebrow){font-size:14px;max-width:440px}.marketing-receipt {background:#f2ede6;border-radius:24px;padding:32px}.marketing .marketing-receipt>p {font-size:10px!important;letter-spacing:.12em;margin:0 0 26px}.marketing-receipt dl {margin:0}.marketing-receipt dl>div {display:flex;justify-content:space-between;padding:17px 0;border-bottom:1px solid #ddd8d0;font-size:15px}.marketing-receipt dl>div:last-child {font-weight:650;font-size:19px;border:0}.marketing-receipt dd {margin:0}.marketing-receipt small {font-size:11px;color:#77786e;display:block;margin-top:18px}
+.marketing-faq {display:grid;grid-template-columns:1fr 1.2fr;gap:65px;padding:60px 0 80px;border-top:1px solid #e2e4db}.marketing-faq details {border-bottom:1px solid #e2e4db}.marketing-faq summary {padding:22px 0;min-height:48px;cursor:pointer;font-size:16px;display:flex;justify-content:space-between;gap:20px;list-style:none}.marketing-faq summary::-webkit-details-marker {display:none}.marketing-faq summary span {font-size:22px;color:#7c8e67}.marketing-faq details[open] summary span {transform:rotate(45deg)}.marketing-faq details p {font-size:14px;margin:0 0 24px}
+.marketing-end {text-align:center;background:#eef0e5;border-radius:30px;padding:65px 25px;margin:0 0 50px}.marketing-end h2 {max-width:650px;margin:0 auto 30px}.marketing-end>p:last-child {font-size:13px;margin-top:25px}.marketing-end>p:last-child a {text-decoration:underline;text-underline-offset:4px}
+@media(max-width:760px){.marketing{padding:0 20px}.marketing-hero{grid-template-columns:1fr;gap:30px;padding:40px 0}.marketing h1{font-size:48px}.marketing-lead{font-size:15px;margin:20px 0}.marketing-actions{gap:18px;margin:24px 0 12px}.marketing-showcase{transform:none;padding:12px;border-radius:26px}.showcase-photo{height:340px}.showcase-message{padding:20px;margin:-16px 8px 0}.marketing-strip{display:block;padding:24px 0}.marketing-strip>div{font-size:15px;margin-top:14px}.marketing-section{padding:50px 0}.marketing h2{font-size:37px}.marketing-steps{grid-template-columns:1fr;gap:12px}.marketing-steps article{padding:24px}.marketing-steps article>span{margin-bottom:18px}.marketing-promise{padding:30px 24px;grid-template-columns:1fr;gap:12px}.marketing-offers{grid-template-columns:1fr 1fr;gap:12px}.marketing-offers article{padding:20px}.marketing-offers h3{font-size:21px}.marketing-offers article:first-child{grid-column:1/-1}.marketing-creator,.marketing-fees,.marketing-faq{grid-template-columns:1fr;gap:30px;padding:45px 0}.marketing-receipt{padding:25px}.marketing-end{padding:40px 22px}.marketing-end h2{font-size:36px}.marketing-faq summary{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.marketing-showcase{transform:none}}

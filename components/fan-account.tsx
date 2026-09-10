@@ -145,6 +145,7 @@ export function FanAccount({
             <button className="back-link" onClick={() => setActive("")}>
               ← All messages
             </button>
+            {(selected.creatorHandle || data.demo) && <Link className="back-link" href={`/@${selected.creatorHandle || "stella"}`}>Back to @{selected.creatorHandle || "stella"}</Link>}
             <div className="message-list">
               {selected.messages.map((m) => (
                 <div

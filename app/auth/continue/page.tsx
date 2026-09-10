@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth/session";
-import { safeNext } from "@/lib/auth/paths";
+import { safeNext, isCreatorDestination } from "@/lib/auth/paths";
 export default async function Continue({
   searchParams,
 }: {
@@ -10,7 +10,7 @@ export default async function Continue({
   if (!viewer) redirect("/login");
   const next = safeNext((await searchParams).next);
   redirect(
-    next === "/creator/apply"
+    next === "/creator/apply" || isCreatorDestination(next)
       ? next
       : viewer.role === "creator" || viewer.role === "admin"
         ? "/creator/dashboard"

@@ -90,6 +90,7 @@ export interface ChatMessage {
   attachment?: string;
 }
 export interface Conversation {
+  creatorHandle?: string;
   id: string;
   fanId: string;
   unread: number;

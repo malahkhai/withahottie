@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { isCreatorDestination, signupAllowed } from "@/lib/auth/paths";
 import { authOrigin } from "@/lib/site";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,7 +31,11 @@ export function AuthForm({
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
-      router.push(next === "/creator/apply" ? next : data.next);
+      router.push(
+        next === "/creator/apply" || isCreatorDestination(next)
+          ? next
+          : data.next,
+      );
       router.refresh();
     } catch {
       setError("Could not start the demo. Try again.");
@@ -68,7 +73,9 @@ export function AuthForm({
         router.refresh();
       } else
         setFeedback(
-          "Check your email to confirm your account. Your creator setup will be waiting here.",
+          next === "/creator/apply"
+            ? "Check your email to confirm your account, then continue creator setup."
+            : "Check your email to confirm your account. Open the link in this browser to return to your creator. If it opens elsewhere, log in here afterward—your draft stays in this tab.",
         );
     } catch (error) {
       setError(error instanceof Error ? error.message : "Please try again.");
@@ -78,6 +85,11 @@ export function AuthForm({
   }
   return (
     <>
+      {isCreatorDestination(next) && (
+        <p className="auth-switch">
+          <Link href={next}>← Back to {next.split("?")[0].slice(1)}</Link>
+        </p>
+      )}
       {configured ? (
         <form onSubmit={submit} className="auth-form">
           {mode === "signup" && (
@@ -147,7 +159,12 @@ export function AuthForm({
         </p>
       )}
       <p className="auth-switch">
-        {mode === "login" ? (
+        {mode === "login" && !signupAllowed(next) ? (
+          <>
+            Here for a creator? Open their profile link to join.{" "}
+            <Link href="/creators">Become a creator</Link>
+          </>
+        ) : mode === "login" ? (
           <>
             New here?{" "}
             <Link href={`/signup?next=${encodeURIComponent(next)}`}>
