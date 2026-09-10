@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics/client";
 import Link from "next/link";
 import { isCreatorDestination, signupAllowed } from "@/lib/auth/paths";
 import { authOrigin } from "@/lib/site";
@@ -68,6 +69,7 @@ export function AuthForm({
               },
             });
       if (result.error) throw result.error;
+      track(mode === "login" ? "login" : "signup_submitted", next === "/creator/apply" ? "creator" : "fan");
       if (result.data.session) {
         router.push(`/auth/continue?next=${encodeURIComponent(next)}`);
         router.refresh();

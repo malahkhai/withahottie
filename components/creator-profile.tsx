@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useRequestDraft } from "./request-draft";
@@ -354,7 +355,7 @@ export function CreatorProfile({
                 <button
                   key={offering.kind}
                   className={`offering ${index === 0 ? "offering-featured" : ""}`}
-                  onClick={() => setSelected(offering)}
+                  onClick={() => { track("interaction_select", offering.kind); setSelected(offering); }}
                 >
                   <span className={`offering-icon icon-${offering.kind}`}>
                     <Icon name={offering.icon as IconName} size={23} />
@@ -391,7 +392,7 @@ export function CreatorProfile({
                     <br />
                     Your all-access pass to my everyday.
                   </p>
-                  <Button onClick={() => setSelected(vip)}>
+                  <Button onClick={() => { track("interaction_select", "vip"); setSelected(vip); }}>
                     Become VIP <Icon name="arrow" size={18} />
                   </Button>
                   <span className="vip-note">
@@ -417,7 +418,7 @@ export function CreatorProfile({
                       <button
                         className={`preview-tile preview-${index}`}
                         key={title}
-                        onClick={() => setSelected(vip)}
+                        onClick={() => { track("interaction_select", "vip"); setSelected(vip); }}
                         aria-label={`Unlock ${title} with VIP`}
                       >
                         <Image

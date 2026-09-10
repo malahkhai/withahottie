@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics/client";
 import { useRouter } from "next/navigation";
 import { useRequestDraft } from "./request-draft";
 import { useState } from "react";
@@ -73,6 +74,7 @@ export function SecuredCheckout({
       const data = await r.json();
       if (!r.ok) throw Error(data.error);
       setQuote(data);
+      track("checkout_started", "message");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Please try again.");
     } finally {

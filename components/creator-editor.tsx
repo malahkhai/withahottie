@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics/client";
 import { siteConfig } from "@/lib/site";
 
 import Image from "next/image";
@@ -136,6 +137,7 @@ export function CreatorEditor({
         return;
       }
     }
+    if (!demo && !editing) track("creator_onboarding_step", step);
     setStep((s) => Math.min(5, s + 1));
   }
   async function launch() {
@@ -161,6 +163,7 @@ export function CreatorEditor({
         );
         window.dispatchEvent(new Event("replypass:change"));
       }
+      if (!demo && !editing) track("creator_launch_success");
       router.push("/creator/dashboard");
       router.refresh();
     } catch (e) {
@@ -199,7 +202,7 @@ export function CreatorEditor({
             </span>
           </div>
           {authenticated || demo ? (
-            <Button onClick={() => setStep(1)}>
+            <Button onClick={() => { if (!demo) track("creator_onboarding_start"); setStep(1); }}>
               Become a creator <Icon name="arrow" />
             </Button>
           ) : (

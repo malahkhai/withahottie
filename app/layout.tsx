@@ -1,3 +1,4 @@
+import { AnalyticsConsent } from "@/components/analytics-consent";
 import type { Metadata, Viewport } from "next";
 import { PageHeader } from "@/components/page-header";
 import "./globals.css";
@@ -42,6 +43,7 @@ export default function RootLayout({
         <PageHeader />
         {children}
         <SiteFooter />
+        <AnalyticsConsent />
       </body>
     </html>
   );

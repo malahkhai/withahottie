@@ -160,3 +160,7 @@ Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Docu
 - Stella remains explicitly demo data and cannot enter Stripe checkout. The landing pages distinguish test-mode Guaranteed Reply from upcoming paid formats.
 
 Run `tests/marketing-browser.mjs` with the same external Playwright/Chrome environment as the other browser tests. It covers both landing pages, no-context signup, creator logo behavior, About navigation, draft restoration and mobile/desktop overflow.
+
+## Analytics and consent
+
+See [the GA4 page/event map and setup](docs/analytics.md). Basic Consent Mode blocks Google until acceptance. Set `NEXT_PUBLIC_GA_ENABLED=true` only after the documented GA4 stream setup; default is disabled. No message contents or identifying route parameters are tracked.
