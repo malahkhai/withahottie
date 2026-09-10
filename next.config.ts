@@ -1,7 +1,9 @@
+import { stripeConfig } from "./lib/stripe/config";
 import type { NextConfig } from "next";
 import { getSupabaseConfig } from "./lib/supabase/config";
 // Fail before bundling if a privileged key was assigned to a public variable.
 getSupabaseConfig();
+stripeConfig();
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {

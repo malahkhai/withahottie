@@ -45,6 +45,7 @@ export function CreatorEditor({
 }) {
   const [draft, setDraft] = useState<CreatorDraft>({
     ...initial,
+    pricing:initial.pricing.map(p=>p.kind==="message"&&!demo&&!initial.payoutReady?{...p,enabled:false}:p),
     image: initial.image.startsWith("data:")
       ? "/images/avatar.svg"
       : initial.image,
@@ -434,6 +435,7 @@ export function CreatorEditor({
                   <label className="toggle">
                     <input
                       type="checkbox"
+                      disabled={item.kind === "message" && !demo && !initial.payoutReady}
                       aria-label={`Enable ${item.title}`}
                       checked={price.enabled}
                       onChange={(e) =>

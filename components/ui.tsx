@@ -48,16 +48,18 @@ export function Price({
   cents,
   unit,
   decimals = false,
+  currency = "EUR",
 }: {
   cents: number;
   unit?: string;
   decimals?: boolean;
+  currency?: string;
 }) {
   return (
     <span className="price">
       {new Intl.NumberFormat("en-IE", {
         style: "currency",
-        currency: "EUR",
+        currency,
         minimumFractionDigits: decimals ? 2 : 0,
         maximumFractionDigits: 2,
       }).format(cents / 100)}

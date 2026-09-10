@@ -1,32 +1,11 @@
-import { NextResponse } from "next/server";
-import { getViewer } from "@/lib/auth/session";
-import { createClient } from "@/lib/supabase/server";
-import { readJson, fail } from "@/lib/http";
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const viewer = await getViewer();
-  if (!viewer) return fail("Sign in required.", 401);
-  if (!["creator", "admin"].includes(viewer.role))
-    return fail("Creator access required.", 403);
-  if (viewer.demo)
-    return fail("Demo request changes are local to this browser.");
-  try {
-    const { action } = await readJson(request);
-    if (!["accept", "decline", "complete"].includes(action))
-      return fail("Invalid action.");
-    const { error } = await (await createClient())!.rpc("respond_to_request", {
-      request_id: (await params).id,
-      action,
-    });
-    if (error)
-      return fail(
-        "This request is unavailable, expired or already handled.",
-        409,
-      );
-    return NextResponse.json({ ok: true });
-  } catch {
-    return fail("Unable to update the request.");
-  }
+import { getViewer } from '@/lib/auth/session';
+import { readJson,fail } from '@/lib/http';
+import { replyService,ownedPayment } from '@/lib/stripe/service';
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}) {
+ const viewer=await getViewer();if(!viewer||viewer.demo||!['creator','admin'].includes(viewer.role))return fail('Creator sign-in required.',401);
+ try {const {action}=await readJson(request);if(!['accept','decline'].includes(action))return fail('Reply in the conversation to fulfill this request.');
+ const {db,engine}=replyService();const {data}=await db.from('reply_payments').select('id').eq('request_id',(await params).id).single();if(!data)return fail('Request unavailable.',404);
+ await ownedPayment(data.id,viewer.id,'creator');const p=action==='accept'?await engine.accept(data.id,viewer.id):await engine.decline(data.id,viewer.id);
+ return Response.json({ok:true,conversationId:p.conversation_id});
+ }catch{return fail('Request unavailable, expired or awaiting payment reconciliation.',409);}
 }

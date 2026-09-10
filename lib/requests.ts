@@ -9,7 +9,7 @@ export function requestState(
   request: CreatorRequest,
   now = Date.now(),
 ): RequestState {
-  return request.status === "pending" && Date.parse(request.expires_at) <= now
+  return ["pending", "accepted"].includes(request.status) && Date.parse(request.expires_at) <= now
     ? "expired"
     : request.status;
 }

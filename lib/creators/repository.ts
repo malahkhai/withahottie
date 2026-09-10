@@ -1,3 +1,5 @@
+import { stripeConfig } from '@/lib/stripe/config';
+import { connectStatus } from '@/lib/stripe/connect';
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { demoCreator } from "@/lib/auth/demo";
@@ -64,7 +66,9 @@ export async function creatorForUser(
   ]);
   if (pError || priceError || !profile)
     throw Error("Unable to load creator settings.");
-  return draftFromRow(row, profile, prices || []);
+  const draft=draftFromRow(row, profile, prices || []);
+  try {draft.payoutReady=!!stripeConfig() && (await connectStatus(row.id)).ready;} catch {draft.payoutReady=false;}
+  return draft;
 }
 export async function findCreator(raw: string): Promise<PublicCreator | null> {
   let username: string;

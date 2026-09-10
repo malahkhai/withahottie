@@ -49,6 +49,10 @@ import assert from "node:assert/strict";
     ),
     false,
   );
+  await page.goto(base + "/creator/payouts");
+  await page.getByRole("heading", { name: "Get paid with Stripe" }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.goto(base + "/creator/dashboard");
   await page
     .getByRole("button", { name: "Accept", exact: true })
     .first()
@@ -170,6 +174,9 @@ import assert from "node:assert/strict";
     page.url().endsWith("/account"),
     "fan cannot access creator workspace",
   );
+  await page.goto(base + "/account/requests");
+  await page.getByRole("heading", { name: "Your requests" }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   const missing = await page.goto(base + "/@nobody_here", {
     waitUntil: "domcontentloaded",
   });

@@ -1,3 +1,4 @@
+import {stripeConfig} from '@/lib/stripe/config';
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/metadata";
 import { siteConfig } from "@/lib/site";
@@ -36,5 +37,5 @@ export default async function Profile({
   if (!decoded.startsWith("@")) notFound();
   const creator = await findCreator(handle);
   if (!creator) notFound();
-  return <CreatorProfile creator={creator} />;
+  return <CreatorProfile creator={creator} paymentsEnabled={!!stripeConfig()} />;
 }

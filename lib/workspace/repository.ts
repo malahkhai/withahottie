@@ -1,3 +1,6 @@
+import { stripeConfig } from '@/lib/stripe/config';
+import { paymentBackend } from '@/lib/stripe/server';
+import type {ReplyPayment} from '@/lib/stripe/engine';
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { creatorForUser } from "@/lib/creators/repository";
@@ -24,7 +27,7 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
     supabase
       .from("paid_interactions")
       .select(
-        "id,fan_id,creator_id,kind,amount_cents,currency,status,created_at,captured_at,completed_at",
+        "id,fan_id,creator_id,kind,amount_cents,currency,status,created_at,captured_at,completed_at,fee_cents,creator_cents,conversation_id",
       ),
     supabase
       .from("subscriptions")
@@ -82,6 +85,11 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       (s) => s.fan_id === p.id && s.status === "active",
     ),
   }));
+  let secured:ReplyPayment[]=[];
+  if(stripeConfig() && interactionIds.length) {
+    const {data,error}=await paymentBackend().db.from('reply_payments').select('*').in('interaction_id',interactionIds);
+    if(error)throw Error('Payment context unavailable.');secured=data||[];
+  }
   const requestRows: CreatorRequest[] = (requests || []).map((r) => {
     const p = interactions!.find((p) => p.id === r.interaction_id)!;
     return {
@@ -90,9 +98,12 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       kind: p.kind,
       body: r.body,
       amountCents: p.amount_cents,
+      creatorCents: p.creator_cents ?? undefined,
+      conversationId: p.conversation_id,
       currency: p.currency,
       status: r.status === "fulfilled" ? "completed" : r.status,
-      paymentStatus: p.status,
+      paymentStatus: secured.find(x=>x.interaction_id===p.id)?.payment_state || p.status,
+      needsReconciliation: secured.find(x=>x.interaction_id===p.id)?.needs_reconciliation || false,
       expires_at: r.expires_at,
       accepted_at: r.accepted_at,
       declined_at: r.declined_at,
@@ -131,7 +142,7 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
         (m) =>
           m.sender_id !== viewer.id && (!lastRead || m.created_at > lastRead),
       ).length,
-      context: "Private conversation · Payments remain mocked",
+      context: (()=>{const p=secured.find(p=>p.conversation_id===id);if(!p)return 'Private conversation';const money=(cents:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:p.currency}).format(cents/100);if(p.needs_reconciliation)return 'Reply saved · Payment being checked';return p.payment_state==='captured'?`Reply completed · ${money(p.creator_cents)} earned`:p.payment_state==='authorized'?`${money(p.gross_cents)} secured · Reply to earn ${money(p.creator_cents)}`:'Reservation released or under review';})(),
       messages: msgs.map((m) => ({
         id: m.id,
         senderId: m.sender_id,
@@ -152,7 +163,7 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       .filter((p) =>
         (p.captured_at || p.completed_at || p.created_at).startsWith(day),
       )
-      .reduce((sum, p) => sum + splitPayment(p.amount_cents).creatorCents, 0);
+      .reduce((sum, p) => sum + (p.creator_cents ?? splitPayment(p.amount_cents).creatorCents), 0);
   });
   return {
     demo: false,

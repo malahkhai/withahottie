@@ -84,3 +84,13 @@ test("production identity and draft trust metadata render", async () => {
   assert.equal(image.status, 200);
   assert.match(image.headers.get("content-type"), /image\/png/);
 });
+
+test("financial APIs reject anonymous mutations and unsigned webhooks", async () => {
+  for (const route of ["/api/payments/reply", "/api/payments/reply/11111111-1111-4111-8111-111111111111", "/api/creator/payouts"]) {
+    const response = await fetch(base + route, {method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+    assert.equal(response.status,401,route);
+  }
+  assert.equal((await fetch(base + "/api/admin/payments/11111111-1111-4111-8111-111111111111/refund", {method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})).status,403);
+  assert.equal((await fetch(base + "/api/cron/payments")).status,401);
+  assert.equal((await fetch(base + "/api/stripe/webhook", {method:"POST",body:'{"type":"payment_intent.succeeded"}'})).status,400);
+});

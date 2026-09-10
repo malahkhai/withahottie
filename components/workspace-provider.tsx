@@ -90,6 +90,7 @@ export function WorkspaceProvider({
     });
     const result = await response.json();
     if (!response.ok) throw Error(result.error);
+    if(result.conversationId)router.push(`/creator/inbox/${result.conversationId}`);
     router.refresh();
   }
   async function send(id: string, body: string, attachment?: string) {

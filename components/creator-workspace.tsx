@@ -84,7 +84,7 @@ export function RequestCard({
   }, []);
   const fan = data.fans.find((f) => f.id === request.fanId);
   const state = now === null ? request.status : requestState(request, now);
-  const earning = splitPayment(request.amountCents).creatorCents;
+  const earning = request.creatorCents ?? splitPayment(request.amountCents).creatorCents;
   const title =
     catalog.find((c) => c.kind === request.kind)?.title || "Request";
   async function act(action: string) {
@@ -117,22 +117,23 @@ export function RequestCard({
             : `a ${title.toLowerCase()}`}
       </h3>
       <p className="request-body">{request.body}</p>
+      {request.needsReconciliation && <p role="status">Your reply is saved. Payment reconciliation is in progress; earnings are not confirmed yet.</p>}
       <div className="request-money">
         <div>
-          <span>You earn</span>
+          <span>You earn if you reply</span>
           <strong>
-            <Price cents={earning} decimals />
+            <Price cents={earning} currency={request.currency} decimals />
           </strong>
         </div>
         <div>
           <span>
             Fan{" "}
-            {request.paymentStatus === "authorized" ? "authorized" : "amount"}
+            {request.paymentStatus === "authorized" ? "secured" : "amount"}
           </span>
-          <Price cents={request.amountCents} decimals />
+          <Price cents={request.amountCents} currency={request.currency} decimals />
         </div>
       </div>
-      {state === "pending" && (
+      {["pending", "accepted"].includes(state) && (
         <p className="expiry">
           <Icon name="bolt" size={14} />
           {now === null
@@ -155,7 +156,8 @@ export function RequestCard({
           </Button>
         </div>
       )}
-      {state === "accepted" && (
+      {state === "accepted" && !data.demo && request.conversationId && <Link className="button" href={`/creator/inbox/${request.conversationId}`}>Reply to earn</Link>}
+      {state === "accepted" && data.demo && (
         <Button
           variant="secondary"
           disabled={busy}
@@ -873,7 +875,7 @@ export function SettingsPage() {
         <div className="setting-row">
           <div>
             <strong>Payments</strong>
-            <p>Stripe remains mocked. No real charges or payouts.</p>
+            <p>Guaranteed replies can use Stripe test mode. Other services remain demo-only.</p>
           </div>
           <Badge>NOT CONNECTED</Badge>
         </div>
@@ -887,7 +889,7 @@ export function SettingsPage() {
         <div className="settings-more">
           {creatorNav
             .filter((n) =>
-              ["Subscribers", "Earnings", "Analytics"].includes(n.name),
+              ["Subscribers", "Earnings", "Analytics", "Payouts"].includes(n.name),
             )
             .map((n) => (
               <Link href={n.path} key={n.path}>

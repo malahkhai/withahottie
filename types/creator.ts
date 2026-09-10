@@ -13,6 +13,7 @@ export const categories = [
 ] as const;
 export type Availability = "online" | "away" | "offline";
 export interface CreatorDraft {
+  payoutReady?: boolean;
   displayName: string;
   username: string;
   image: string;
@@ -65,6 +66,9 @@ export interface Fan {
   vip: boolean;
 }
 export interface CreatorRequest {
+  creatorCents?: number;
+  needsReconciliation?: boolean;
+  conversationId?: string | null;
   id: string;
   fanId: string;
   kind: InteractionKind;

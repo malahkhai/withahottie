@@ -11,6 +11,7 @@ export const creatorNav: { name: string; path: string; icon: IconName }[] = [
   { name: "Inbox", path: "/creator/inbox", icon: "message" },
   { name: "Requests", path: "/creator/requests", icon: "bolt" },
   { name: "Subscribers", path: "/creator/subscribers", icon: "heart" },
+  { name: "Payouts", path: "/creator/payouts", icon: "shield" },
   { name: "Earnings", path: "/creator/earnings", icon: "star" },
   { name: "Analytics", path: "/creator/analytics", icon: "sparkles" },
   { name: "Profile", path: "/creator/profile", icon: "user" },

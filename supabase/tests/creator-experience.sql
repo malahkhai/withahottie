@@ -19,32 +19,11 @@ begin
  exception when raise_exception then if sqlerrm='Invalid price allowed' then raise; end if; end;
  if (select amount_cents from public.creator_pricing where creator_id=cid and kind='message')<>400 then raise exception 'Invalid save was not atomic'; end if;
 end $$;
-reset role;
-insert into public.paid_interactions(id,fan_id,creator_id,kind,amount_cents,status)
-select '30000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000012',id,'message',400,'authorized' from public.creator_profiles where handle='test_launch';
-insert into public.interaction_requests(id,interaction_id,body,expires_at) values
-('40000000-0000-4000-8000-000000000011','30000000-0000-4000-8000-000000000011','Hello',now()+interval '1 hour');
-insert into public.conversations(id,created_by) values ('20000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000011');
-insert into public.conversation_members(conversation_id,profile_id) values ('20000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000011');
-set local role authenticated;
-select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000012',true);
 do $$ begin
- if public.username_available('test_launch') then raise exception 'Duplicate username allowed'; end if;
- begin perform public.respond_to_request('40000000-0000-4000-8000-000000000011','accept'); raise exception 'Fan accepted creator request'; exception when raise_exception then if sqlerrm='Fan accepted creator request' then raise; end if; end;
- begin perform public.send_chat_message('20000000-0000-4000-8000-000000000011','Unauthorized'); raise exception 'Nonmember sent message'; exception when raise_exception then if sqlerrm='Nonmember sent message' then raise; end if; end;
-end $$;
-select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000011',true);
-do $$ begin
- begin perform public.respond_to_request('40000000-0000-4000-8000-000000000011',null); raise exception 'Null action accepted'; exception when raise_exception then if sqlerrm='Null action accepted' then raise; end if; end;
- if (select status from public.interaction_requests where id='40000000-0000-4000-8000-000000000011') <> 'pending' then raise exception 'Null action changed request'; end if;
-end $$;
-select public.respond_to_request('40000000-0000-4000-8000-000000000011','accept');
-select public.respond_to_request('40000000-0000-4000-8000-000000000011','complete');
-select public.send_chat_message('20000000-0000-4000-8000-000000000011','Hello from a member');
-do $$ begin
- if not exists(select 1 from public.interaction_requests where id='40000000-0000-4000-8000-000000000011' and status='fulfilled' and accepted_at is not null and completed_at is not null) then raise exception 'Request transition failed'; end if;
- if (select status from public.paid_interactions where id='30000000-0000-4000-8000-000000000011') <> 'authorized' then raise exception 'Request action changed payment state'; end if;
+ begin perform public.respond_to_request(gen_random_uuid(),'complete');raise exception 'Legacy completion still exposed';exception when insufficient_privilege then null;end;
+ begin perform public.send_chat_message(gen_random_uuid(),'Bypass');raise exception 'Legacy send still exposed';exception when insufficient_privilege then null;end;
+ if exists(select 1 from public.creator_pricing where kind='message' and active) then raise exception 'Payout gate bypassed through onboarding';end if;
 end $$;
 reset role;
 rollback;
-\echo 'Creator RPC checks passed (fixtures rolled back).'
+\echo 'Onboarding validation, atomic role promotion, and legacy RPC revocation checks passed.'

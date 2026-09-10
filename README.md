@@ -4,7 +4,9 @@
 
 Creator proposition: **Get paid for your attention.** Fan promise: **No reply = no charge.** ReplyPass is a brand-safe, mobile-first creator platform for guaranteed messages, live text chat, voice notes, photo/video requests and VIP subscriptions.
 
-Task 2 adds authentication and the creator experience. **Payments remain mocked.** Accepting or completing requests never captures money; future Stripe webhooks control final financial state.
+Task 3 adds **test-mode secured Guaranteed Reply payments** with Stripe Connect. Funds are reserved first, acceptance never captures, and the first qualifying creator reply triggers capture and an 85% creator transfer. Other offerings remain demos. Live Stripe keys are rejected.
+
+Start with the step-by-step [Supabase, Vercel and Stripe setup guide](docs/setup.md).
 
 ## Local installation
 
@@ -30,7 +32,7 @@ app/
   login/ signup/ auth/      Email/password, confirmation and session routes
   creator/apply/            Multi-step onboarding and mobile preview
   creator/(workspace)/      Dashboard, inbox/[id], requests, subscribers,
-                            earnings, analytics, profile and settings
+                            earnings, payouts, analytics, profile and settings
   account/                  Fan messages, requests, subscriptions, purchases,
                             saved creators and settings
   api/                      Authorized auth/profile/request/message APIs
@@ -40,6 +42,8 @@ lib/
   creators/                 Repository, validation, catalog and profile mapping
   workspace/                Supabase data loading and fictional fixtures
   payments/                 Centralized fees, state model and mock quotes
+  stripe/                   Test-mode Connect, authorization/capture, webhooks,
+                            reconciliation and private payment summaries
   supabase/                 Browser/server clients and configuration
   requests.ts               Expiry formatting and request state transitions
 types/                      Typed creator, workspace and payment domains
@@ -60,17 +64,17 @@ All amounts are integer minor units; currency is stored separately. `lib/payment
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key, protected by RLS |
-| `SUPABASE_SERVICE_ROLE_KEY` | Reserved for future trusted server workers |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Reserved for Task 3 |
-| `STRIPE_SECRET_KEY` | Reserved for Task 3; server-only |
-| `STRIPE_WEBHOOK_SECRET` | Reserved for future webhook verification |
+| `SUPABASE_SERVICE_ROLE_KEY` | Trusted server-only message and financial operations |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Test publishable key (`pk_test_`) |
+| `STRIPE_SECRET_KEY` | Test secret key (`sk_test_`); server-only |
+| `STRIPE_WEBHOOK_SECRET` | Snapshot webhook signing secret (`whsec_`) |
 | `NEXT_PUBLIC_APP_URL` | Public sharing/metadata origin: `https://getreplypass.com` |
 
-Never commit secrets or `.env.local`. The service-role and Stripe keys are unused in Task 2; setting them does not enable payments.
+Never commit secrets or `.env.local`. All Stripe keys must be absent for mock checkout, or supplied together with all three Supabase values to enable test payments. Also configure `STRIPE_CONNECT_WEBHOOK_SECRET` for a separate Accounts v2 destination, `CRON_SECRET` (32+ random characters) for reconciliation, and optional `REPLY_EXPIRY_SECONDS` (30–86400; default 86400). Invalid/partial/live configuration fails closed. Supabase-only ordinary messaging requires the server service-role key after migration 005.
 
 ## Supabase setup
 
-1. Create a Supabase project and apply **all migrations in filename order**. Existing Task 1 projects need migrations 002–004; existing Task 2 projects need only 004. Use the SQL editor, or initialize/link the Supabase CLI and run `npx supabase db push`.
+1. Create a Supabase project and apply **all migrations in filename order**. Existing Task 1 projects need migrations 002–006; existing Task 2.5 projects need 005–006. Use the SQL editor, or initialize/link the Supabase CLI and run `npx supabase db push`.
 2. Set the URL and anon key, then restart Next.js. Enable email/password authentication, email confirmation, SMTP and a 12-character minimum password policy.
 3. Set Supabase Auth **Site URL** to `https://getreplypass.com`. Add these **Redirect URLs**:
    - `https://getreplypass.com/auth/callback`
@@ -83,32 +87,23 @@ Never commit secrets or `.env.local`. The service-role and Stripe keys are unuse
 
 Completed onboarding publishes an **unverified** creator profile with application status `pending`. Verification and approval remain trusted moderation decisions; suspended/rejected creators cannot relaunch themselves. Admin roles must be assigned through trusted operations. Hosted Supabase email delivery and authentication need end-to-end verification with your own project credentials.
 
-## Planned Stripe / Stripe Connect architecture
+## Secured Guaranteed Reply architecture
 
-The frontend is never a payment source of truth. The browser will submit an offering and request; the server must derive the approved creator, current price, duration limit and currency, enforce auth/blocking/rate limits, and create idempotent records. Never accept browser totals, creator ownership or payment status.
+The server reads active creator pricing, blocks, account readiness and currency. It snapshots integer gross/fee/net amounts and the 15% fee policy for each immutable order. The frontend submits only a creator ID, message and retry UUID. No private message is copied to Stripe metadata.
 
-One-off interaction states:
+1. Create or reuse one manual-capture card PaymentIntent. No creator request exists before verified authorization.
+2. Stripe confirmation/webhooks reconcile the provider and publish the request with a 24-hour acceptance-and-fulfillment deadline, capped by the actual card capture window.
+3. Creator acceptance atomically creates one conversation; funds remain reserved.
+4. Persist the first qualifying creator reply and acquire the capture claim in one database transaction. Capture the existing intent, then separately transfer the snapshotted 85% net with `source_transaction` bound to the captured charge.
+5. Declines and unanswered deadlines cancel authorizations. Post-capture admin refunds reverse any creator transfer. Capture/transfer failures preserve the reply and pending liability for retries.
 
-```text
-pending → authorized → accepted → captured → completed
-                  ↘ declined / expired
-captured or completed → refunded / disputed
-```
+Accounts v2 recipient configuration, Express dashboard and hosted onboarding were selected for Stripe's current marketplace architecture. Separate charges and transfers allow fulfillment-controlled capture followed by a creator transfer; the platform retains the fee and bears processor fees/loss responsibility. Connect readiness is checked before checkout and again before transfer. See [Stripe's marketplace guide](https://docs.stripe.com/connect/marketplace/quickstart) and [separate charges and transfers](https://docs.stripe.com/connect/separate-charges-and-transfers).
 
-All valid states are `pending`, `authorized`, `accepted`, `captured`, `completed`, `declined`, `expired`, `refunded`, `disputed`. `lib/payments/model.ts` defines allowed domain transitions; it is not a webhook handler. Dispute resolution requires restoring the reconciled previous successful state or refunding, not blindly advancing state.
+`reply_payments` separates payment states (`pending`, `authorized`, `captured`, `canceled`, `refunded`, `disputed`, `failed`) from request states (`pending`, `accepted`, `fulfilled`, `declined`, `expired`). Existing `fulfilled` is displayed as Completed; historical migrations are preserved. `transactions` stores charge/fee/transfer/refund ledger entries separately. `creator_stripe_accounts` and the webhook inbox are service-only under RLS. Snapshot amounts cannot be mutated even by routine server updates.
 
-Planned flow:
+`/api/stripe/webhook` verifies raw signatures and persists event IDs. It retrieves current Stripe state instead of trusting event arrival order or browser success. Database locks/constraints and deterministic Stripe operation keys prevent duplicate orders, conversations, captures and transfers. `/api/cron/payments` rotates batches of unresolved payments every five minutes using a protected bearer secret. Manual-review cases pause automation. Full event subscriptions and operator steps are in [setup.md](docs/setup.md); security boundaries are in [payment-readiness.md](docs/payment-readiness.md).
 
-1. Onboard approved creators with Stripe Connect hosted onboarding and verify charges/payout capabilities. Store Connect account IDs in a **private** server-owned table, not public creator profiles.
-2. Create PaymentIntents with manual capture and server-side idempotency. Authorization may place a temporary bank hold; it is not a captured charge. Restrict payment methods to those supporting the required authorization/capture flow.
-3. Accept a request within a deadline shorter than the actual authorization window; capture only when the promised reply/deliverable is fulfilled. For live text chat, authorize a user-selected duration cap and capture only the agreed delivered duration. Acceptance alone never earns a charge. Declines/timeouts release authorizations; missed promises after capture require refunds.
-4. Verify Stripe webhook signatures against the raw body. Persist event IDs in a durable inbox, process transactionally and idempotently, handle out-of-order events by retrieving/reconciling provider state, and retry safely. Webhooks control final capture, refund, dispute and payout state; browser redirects do not.
-5. VIP uses Stripe Billing subscription/invoice events and its own subscription lifecycle. Entitlements require active/trialing status and an unexpired period. The one-off guaranteed reply promise does not silently extend to unlimited basic VIP messaging; product terms must define this before charging.
-6. Select the Connect charge/transfer model and apply the centralized 15% platform / 85% creator fee policy before integration; implement ledger reconciliation, delayed transfers where needed, refunds, transfer reversals and payout failure handling. Add the webhook inbox, Connect mapping and endpoint tests with that task.
-
-There is deliberately **no live checkout endpoint or webhook endpoint** in Task 2. No payment method collection, timed live chat billing, subscription renewal or payout processing is implemented. Locked tiles are demo media, not a real paywall. Real paid assets must never be bundled in `public/`.
-
-References: [Next.js App Router](https://nextjs.org/docs/app), [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [Stripe authorization and capture](https://docs.stripe.com/payments/place-a-hold-on-a-payment-method), [Stripe Connect](https://docs.stripe.com/connect).
+Cards and supported card wallets only. No paid live chat, paid media, real VIP subscription, wallet, coins or bank-payment methods are implemented. Preview media remains demo content. This is a sandbox integration, not authorization to enable live payments.
 
 ## Development and validation
 
@@ -127,6 +122,8 @@ On a disposable Supabase test database, after migrations:
 ```sh
 psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls.sql
 psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/creator-experience.sql
+psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/secured-replies.sql
+python3 tests/db-concurrency.py # also set PSQL if psql is not on PATH
 ```
 
 `tests/browser.mjs` is an optional browser acceptance script. Run it with an externally installed Playwright module (`PLAYWRIGHT_MODULE=/absolute/path/to/playwright node tests/browser.mjs`); set `CHROME_EXECUTABLE` to an existing Chrome binary or install Playwright Chromium. Screenshots are written to the OS temporary directory. `TEST_APP_URL` selects the running server.
@@ -137,7 +134,7 @@ Unit tests cover payment transitions, server quotes, fee rounding, creator valid
 
 Import the existing GitHub repository into Vercel, select Next.js and Node 22.x, and retain the default build command. Configure app origin, Supabase values and auth redirects before testing real accounts. Standard App Router configuration requires no custom hosting adapter.
 
-Task 3 will implement Stripe/Connect and webhook-controlled financial workflows. Real payment capture, payouts, background expiration, subscription billing, moderation operations and production rate limiting are not implemented in Task 2. Locked preview tiles are demo media, not a payment entitlement system.
+Task 3 implements test-mode Guaranteed Reply capture, Connect transfers and protected scheduled reconciliation. External Supabase/Stripe/Vercel setup and the full hosted sandbox scenario remain manual. Production rate limiting, finalized legal policies and live-payment launch review remain outside this task. Locked preview tiles are demo media, not a payment entitlement system.
 
 ## Production identity — Task 2.5
 
@@ -147,4 +144,8 @@ Creator canonical/share URLs use `https://getreplypass.com/@username`. `lib/meta
 
 Attach `getreplypass.com` to the Vercel project and configure the DNS records Vercel provides; no DNS or domain ownership changes were made in this task. GitHub still uses the legacy repository name. Rename it manually to `replypass` if desired, then update origin to the URL GitHub reports. The existing remote is intentionally preserved.
 
-Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Documents folder is an iCloud source mirror and may be evicted. See `docs/payment-readiness.md` for the Task 3 boundary and security review. Task 2.5 does not enable Stripe or make draft policies final.
+Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Documents folder is an iCloud source mirror and may be evicted. See `docs/payment-readiness.md` for the implemented security boundaries and `docs/setup.md` for configuration. Draft policies are not final.
+
+## Task 3 validation
+
+`tests/secured-payments.test.ts` uses a mocked Stripe provider for holds, declines, expiry, capture/transfer retries, signatures and idempotency. SQL suites cover permissions, ownership, immutable prices and fulfillment claims; `tests/db-concurrency.py` uses concurrent database connections. `tests/stripe-browser.mjs` mocks Stripe.js and checkout responses to verify the Payment Element UI contract, insufficient funds, retry identity and server-confirmed success. It requires a build with coherent **fake** test credentials; see its header. The ordinary browser suite requires credentials absent. No automated test sends money or establishes hosted service readiness.

@@ -8,6 +8,7 @@ insert into auth.users(id, raw_user_meta_data) values
 update public.profiles set role = 'creator' where id = '00000000-0000-4000-8000-000000000003';
 update public.profiles set role = 'admin' where id = '00000000-0000-4000-8000-000000000004';
 insert into public.creator_profiles(id, profile_id, handle, status) values ('10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000003', 'test_creator', 'approved');
+insert into public.creator_stripe_accounts(creator_id,stripe_account_id,ready) values ('10000000-0000-4000-8000-000000000001','acct_rls_fixture',true);
 insert into public.creator_pricing(creator_id, kind, amount_cents) values ('10000000-0000-4000-8000-000000000001', 'message', 400);
 insert into public.conversations(id, created_by) values ('20000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001');
 insert into public.conversation_members(conversation_id, profile_id) values

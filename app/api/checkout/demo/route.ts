@@ -1,3 +1,4 @@
+import {stripeConfig} from '@/lib/stripe/config';
 import { NextResponse } from "next/server";
 import { findCreator } from "@/lib/creators/repository";
 import { demoQuote } from "@/lib/payments/demo";
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request too large." }, { status: 413 });
   try {
     const input = JSON.parse(raw);
+    if(input?.kind==="message" && stripeConfig()) return NextResponse.json({error:"Use the secured reply checkout."},{status:409});
     const creator = await findCreator(
       typeof input?.handle === "string" ? input.handle : "@stella",
     );

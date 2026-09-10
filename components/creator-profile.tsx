@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import {SecuredCheckout} from "./secured-checkout";
 import { creatorUrl, siteConfig } from "@/lib/site";
 import { useState, useEffect } from "react";
 import type { PublicCreator } from "@/types/creator";
@@ -167,9 +168,9 @@ function Checkout({
   );
 }
 export function CreatorProfile({
-  creator: initial,
+  creator: initial, paymentsEnabled = false,
 }: {
-  creator: PublicCreator;
+  creator: PublicCreator; paymentsEnabled?: boolean;
 }) {
   const [demoImage, setDemoImage] = useState("");
   useEffect(() => {
@@ -430,7 +431,7 @@ export function CreatorProfile({
         onClose={() => setSelected(null)}
         title={selected ? titles[selected.kind] : ""}
       >
-        {selected && (
+        {selected && (paymentsEnabled && selected.kind === "message" ? <SecuredCheckout creator={creator}/> :
           <Checkout
             key={selected.kind}
             offering={selected}

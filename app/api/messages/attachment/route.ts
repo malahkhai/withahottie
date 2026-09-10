@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { sendSecuredMessage } from "@/lib/stripe/messages";
 import { getViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { sameOrigin, fail } from "@/lib/http";
@@ -34,16 +34,16 @@ export async function POST(request: Request) {
     .upload(path, bytes, { contentType: file.type });
   if (uploadError)
     return fail("Upload failed or conversation unavailable.", 403);
-  const { data, error } = await client.rpc("send_chat_attachment", {
-    conversation,
-    content,
-    object_path: path,
-    mime: file.type,
-    bytes: file.size,
-  });
-  if (error) {
+  try {
+    return Response.json(
+      await sendSecuredMessage(viewer.id, conversation, content, {
+        path,
+        mime: file.type,
+        bytes: file.size,
+      }),
+    );
+  } catch {
     await client.storage.from("chat-attachments").remove([path]);
-    return fail("Unable to send the attachment.", 403);
+    return fail("Unable to send; the request may have expired.", 409);
   }
-  return NextResponse.json({ id: data });
 }

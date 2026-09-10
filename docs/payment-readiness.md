@@ -1,28 +1,32 @@
-# Task 2.5 — payment boundary and security review
+# Task 3 — test payment boundaries and security review
 
-This is a code/schema review and local regression check, not a claim of a complete security audit or production payment readiness. No Stripe calls, capture or payout processing are enabled.
+This records the implementation and local checks, not a comprehensive security audit or live-payment launch approval. Real Stripe sandbox onboarding/payment and hosted Supabase authentication remain unverified until account configuration. Live Stripe keys are rejected.
 
-| Concept | Current authority / representation |
+| Concept | Authority |
 | --- | --- |
-| Interaction | `paid_interactions`: fan, creator, kind, server price, currency and payment state |
-| Request | `interaction_requests`: content, expiry, acceptance/decline/fulfillment timestamps; response RPC cannot change money |
-| Transaction | `transactions`: separate charge/refund/fee/transfer/dispute ledger events, provider event/object uniqueness; no client writes |
-| Stripe reference | `stripe_payment_intent_id` identifies the provider object, not an authorization credential; distinct from internal UUIDs |
-| Creator earnings | Derived estimate through `splitPayment`; settled transaction accounting must become authoritative in Task 3 |
-| Platform fee | Central `PLATFORM_FEE_BPS=1500`; Task 3 must snapshot fees per interaction instead of recalculating historical earnings after fee changes |
+| Interaction | `paid_interactions`: offering, fan, creator and immutable payment snapshot linkage |
+| Request | `interaction_requests`: created only after authorization, independently accepted/fulfilled/declined/expired |
+| Payment | `reply_payments`: immutable integer minor-unit gross/fee/net/currency/account snapshot, Stripe references, durable capture/refund claims and reconciliation state |
+| Ledger | `transactions`: unique charge, fee, transfer and refund entries, no client writes |
+| Payout account | `creator_stripe_accounts`: service-only Accounts v2 recipient mapping and eligibility flags; no public KYC details |
+| Event inbox | `stripe_webhook_events`: verified event ID/type, attempts and completion timestamp; no raw sensitive event payload |
 
-Money columns are PostgreSQL integers in minor units: EUR 4.00 is 400. Currency is a separate lowercase ISO identifier (`eur`, `usd`, `gbp`); display labels can use EUR/USD/GBP. V1 pricing is deliberately EUR-only. Do not imply support for currencies with different minor-unit exponents without defining them. Browser decimal price inputs are validated and converted before storage. A transaction never shares a mutable request status field.
+## Enforced boundaries
 
-## Reviewed boundaries
+- Supabase service-role and Stripe secret/signing keys are imported only by server-only utilities. Public configuration rejects privileged Supabase keys. A build using fake privileged sentinel strings was scanned to verify those values were absent from client artifacts.
+- Server authentication supplies fan/creator IDs. APIs enforce ownership and same-origin mutations. Admin refunds require a trusted profile role; onboarding and signup cannot grant admin. Browser totals, currency, fee percentage and destination account are ignored.
+- Service-only financial tables have RLS and no anon/authenticated grants. Legacy user-executable request/message mutation RPCs are revoked so they cannot bypass the qualifying-reply handler. Ordinary messages still use trusted server submission with SQL membership/block checks, even when Stripe is absent.
+- Checkout atomically reads enabled pricing, creator availability, blocks and stored eligibility; server code refreshes Stripe eligibility before it. Financial snapshots are immutable. Currency is separate lowercase ISO (`eur`, `usd`, `gbp`); current pricing UI is EUR-only. Amounts and fee rounding use integers.
+- Unique fan/attempt keys plus advisory locks prevent duplicated order preparation. Creator/message parameters are checked when reusing the same attempt. Stripe operations use deterministic idempotency keys; provider recovery searches precede retrying an unknown creation. Unknown creation older than 23 hours stops for investigation rather than risking a second authorization/account after key retention expires.
+- Acceptance and first reply lock the payment row. The first non-empty creator reply in the correct accepted conversation, before its deadline, is persisted with one capture claim. Concurrent replies retain both messages but have one fulfillment claim. Capture happens afterward. No manual completion endpoint exists for secured requests.
+- Stripe state and exact amount/currency/metadata are verified before financial transitions. Signatures cover the raw body with timestamp tolerance. Inbox completion occurs only after successful reconciliation; repeated or out-of-order notifications use current provider state and idempotent writes.
+- Capture failures retain the reply for retry. Transfer failures retain captured earnings liability. Declines/expiry cancel a hold; admin refunds after capture reverse transferred earnings. Partial external refunds/reversals and won disputes pause automation for manual review.
+- The protected cron uses a timing-safe bearer comparison, bounded batches, rotating update timestamps and idempotent operations. Database deadlines reject late acceptance/replies even if the scheduler is delayed. The scheduler must actually be deployed or invoked locally for automatic cancellation.
 
-- Browser and server Supabase clients use only URL + anon/publishable key. Privileged keys are rejected at Next.js configuration/build startup and in public config; the service-role variable is reserved and never read by client code. Do not put a secret in any `NEXT_PUBLIC_*` variable: build-time validation is not a substitute for correct deployment configuration.
-- Private Supabase utilities and auth helpers use `server-only`. Stripe secret/service-role variables are currently unused. No secret-bearing endpoint exists.
-- Sensitive tables have RLS and scoped grants. Users cannot write transaction rows or final payment state, and unrelated users cannot read participants’ messages/payment records.
-- Signup trigger ignores role metadata. Direct role/verification writes are denied. Creator promotion occurs only in `save_creator_profile`, with `auth.uid()`, validation and row locking; admin role is preserved, never granted by onboarding. Suspended/rejected creators cannot relaunch.
-- Fixed a null-action fallthrough in `respond_to_request` with migration 004 and a rollback-only regression. Accept/complete still never capture payment.
-- Demo checkout resolves creator offerings through the server repository and ignores supplied totals. Production payment code must additionally enforce authenticated eligibility, blocking, limits and approved creator status rather than treating mock checkout as production authorization.
-- Auth destinations are constrained; public sharing and metadata use the configured origin. Loopback callbacks remain local.
+## Checks and practical limits
 
-## Required in Task 3, not implemented here
+Unit tests exercise provider mismatch/tampering, failed authorization, replayed transitions, duplicate mutation keys, deadlines, capture/transfer failure recovery, refunds and forged signatures. SQL suites exercise role escalation, RLS, IDOR, direct financial mutation, immutable prices/currency/fee/account snapshots and legacy bypass revocation. Concurrent SQL connections test checkout, accept and first-reply races. Mobile browser tests cover demo regressions and mocked Stripe checkout confirmation semantics.
 
-Add the private Connect-account mapping, signed webhook endpoint and durable event inbox, fee snapshots, provider reconciliation, idempotent capture/refund/transfer logic, authorization deadlines, entitlement checks, rate limits and ledger-derived creator balances. Only verified provider state should control final financial status. A browser redirect or request completion must never become payment proof. Verify hosted RLS/auth/storage with real project credentials, finalize marketplace terms and review moderation requirements before launch.
+Mocks do not validate Stripe account country availability, hosted KYC, actual SCA/wallet behavior, issuer hold release or deployed webhook delivery. Follow `docs/setup.md` for the hosted sandbox acceptance run. Monitor rows requiring reconciliation and webhook/cron failures. Manual review is an operator workflow, not an automatic assertion of success. Transfers reflect the creator's Stripe balance; bank payout completion is not claimed.
+
+Before any later live launch, complete legal/trust policies, operational monitoring and recovery procedures, account/country approvals, abuse/rate controls and a separate production security review. No live payment mode or Task 4 features are enabled here.

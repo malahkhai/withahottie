@@ -109,6 +109,7 @@ export function FanAccount({
         ))}
       </div>
       <section className="account-panel" role="tabpanel">
+        {tab === "Requests" && <Link className="button button-secondary" href="/account/requests">Track secured replies</Link>}
         {tab === "Messages" && !selected && (
           <>
             {conversations.map((c) => (
