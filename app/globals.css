@@ -2765,6 +2765,165 @@ body:has(.workspace-shell) > .site-header {
   font-weight: 750;
 }
 .payout-demo-notice { margin: 0; }
+/* Stripe-backed earnings */
+.secured-earnings-page { max-width: 1050px; margin: 0 auto; }
+.earnings-heading { align-items: flex-end; }
+.earnings-heading > div { max-width: 620px; }
+.earnings-currency-section + .earnings-currency-section { margin-top: 16px; }
+.earnings-currency-label {
+  color: #818878;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  margin-bottom: 10px;
+}
+.earnings-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.earnings-summary-card {
+  display: grid;
+  gap: 14px;
+  min-height: 142px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: #fff;
+}
+.earnings-summary-card.featured { background: #eef3e5; border-color: #e0e8d5; }
+.earnings-summary-card > span:first-child { color: #77806e; font-size: 11px; }
+.earnings-summary-card > .price { font-size: 31px; font-weight: 650; letter-spacing: -1px; }
+.earnings-summary-card small { align-self: end; color: #92988a; font-size: 10px; }
+.earnings-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(270px, .7fr);
+  gap: 20px;
+}
+.earnings-activity-card,
+.earnings-guide-card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+}
+.earnings-activity-card { min-height: 370px; overflow: hidden; }
+.earnings-section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 26px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.earnings-section-title .eyebrow,
+.earnings-guide-card .eyebrow { color: #879176; font-size: 9px; font-weight: 700; letter-spacing: 1.6px; }
+.earnings-section-title h2,
+.earnings-guide-card h2 { margin-top: 8px; font-size: 22px; letter-spacing: -.7px; }
+.earnings-section-title > span { color: var(--muted); font-size: 10px; }
+.earnings-list { display: grid; }
+.earnings-row {
+  display: grid;
+  grid-template-columns: 38px minmax(130px, 1fr) auto auto;
+  align-items: center;
+  column-gap: 13px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.earnings-row:last-child { border-bottom: 0; }
+.earnings-row-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #f3eee8;
+  color: #a66f5f;
+}
+.earnings-row-person { display: grid; gap: 5px; }
+.earnings-row-person strong { font-size: 12px; }
+.earnings-row-person span { color: var(--muted); font-size: 10px; }
+.earnings-status {
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: #f0f1ed;
+  color: #757b70;
+  font-size: 9px;
+  font-weight: 650;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.earnings-status.status-authorized { background: #fff4de; color: #916c30; }
+.earnings-status.status-captured { background: #eaf2e3; color: #5d754b; }
+.earnings-row-value { display: grid; gap: 4px; min-width: 82px; text-align: right; }
+.earnings-row-value > .price { font-size: 14px; font-weight: 650; }
+.earnings-row-value > span { color: #969b91; font-size: 9px; }
+.earnings-row-value > span .price { font-size: inherit; }
+.earnings-review-note {
+  grid-column: 2 / -1;
+  padding-top: 10px;
+  color: #a45b4f;
+  font-size: 10px;
+}
+.earnings-empty {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 38px;
+  text-align: center;
+}
+.earnings-empty > span {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #edf2e5;
+  color: #687b54;
+}
+.earnings-empty h3 { margin: 19px 0 9px; font-size: 18px; }
+.earnings-empty p { max-width: 440px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.earnings-empty .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  margin-top: 20px;
+  padding: 11px 16px;
+  font-size: 11px;
+}
+.earnings-guide-card { padding: 27px 24px; background: #f4f6ef; border-color: #e5e9dc; }
+.earnings-guide-card h2 { font-size: 22px; line-height: 1.25; }
+.earnings-split-example {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0;
+  margin: 24px 0 19px;
+  border-top: 1px solid #dfe4d7;
+}
+.earnings-split-example > span,
+.earnings-split-example > strong,
+.earnings-split-example > .price {
+  padding: 13px 0;
+  border-bottom: 1px solid #dfe4d7;
+  font-size: 11px;
+}
+.earnings-split-example > .price { text-align: right; font-size: 12px; }
+.earnings-split-example > strong { font-size: 12px; }
+.earnings-guide-card > p:not(.eyebrow) { color: var(--muted); font-size: 11px; line-height: 1.7; }
+.earnings-guide-card > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #dfe4d7;
+  color: #60724d;
+  font-size: 11px;
+  font-weight: 650;
+}
 .editing {
   margin: 0;
   max-width: 660px;
@@ -3251,6 +3410,24 @@ body:has(.workspace-shell) > .site-header {
   .payout-card-copy h2 { font-size: 24px; }
   .payout-status-grid > div { padding: 14px; }
   .payout-trust-row { gap: 12px; margin-top: 12px; }
+  .earnings-heading { display: block; }
+  .earnings-heading .payout-mode-badge { margin-top: 18px; }
+  .earnings-summary-grid { grid-template-columns: 1fr; gap: 10px; }
+  .earnings-summary-card { min-height: 112px; padding: 18px; }
+  .earnings-summary-card > .price { font-size: 28px; }
+  .earnings-main-grid { grid-template-columns: 1fr; }
+  .earnings-activity-card,
+  .earnings-guide-card { border-radius: 17px; }
+  .earnings-section-title { padding: 21px 18px 17px; }
+  .earnings-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    row-gap: 12px;
+    padding: 17px 16px;
+  }
+  .earnings-status { grid-column: 2; justify-self: start; }
+  .earnings-row-value { grid-column: 3; grid-row: 1 / span 2; }
+  .earnings-review-note { grid-column: 2 / -1; }
+  .earnings-empty { min-height: 320px; padding: 30px 20px; }
   .setting-row {
     font-size: 13px;
   }
