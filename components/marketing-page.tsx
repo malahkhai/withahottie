@@ -9,10 +9,17 @@ import {
 import { Price } from "./ui";
 export function MarketingPage({
   forCreators = false,
+  creatorAuthenticated = false,
 }: {
   forCreators?: boolean;
+  creatorAuthenticated?: boolean;
 }) {
   const split = splitPayment(400);
+  const creatorHref = forCreators
+    ? creatorAuthenticated
+      ? "/creator/apply"
+      : "/signup?next=%2Fcreator%2Fapply"
+    : "/creators";
   return (
     <main id="main" className="marketing">
       <section className="marketing-hero">
@@ -47,7 +54,7 @@ export function MarketingPage({
           <div className="marketing-actions">
             <Link
               className="button button-primary"
-              href={forCreators ? "/creator/apply" : "/creators"}
+              href={creatorHref}
             >
               {forCreators ? "Become a creator" : "I’m a creator"}{" "}
               <span aria-hidden="true">↗</span>
@@ -234,7 +241,7 @@ export function MarketingPage({
             like yours, set your boundaries, and make space for the
             conversations you want.
           </p>
-          <Link className="button button-primary" href="/creator/apply">
+          <Link className="button button-primary" href={creatorHref}>
             Build my creator page ↗
           </Link>
         </div>
@@ -368,7 +375,7 @@ export function MarketingPage({
         </h2>
         <Link
           className="button button-primary"
-          href={forCreators ? "/creator/apply" : "/creators"}
+          href={creatorHref}
         >
           Become a creator ↗
         </Link>

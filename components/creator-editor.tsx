@@ -3,14 +3,13 @@ import { track } from "@/lib/analytics/client";
 import { siteConfig } from "@/lib/site";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { categories, type CreatorDraft } from "@/types/creator";
 import { blankCreator, catalog } from "@/lib/creators/catalog";
 import { validateCreator, centsFromInput } from "@/lib/creators/validation";
 import { splitPayment, PLATFORM_FEE_PERCENT } from "@/lib/payments/fees";
-import { Button, Price, Badge } from "./ui";
+import { Button, Price } from "./ui";
 import { Icon } from "./icon";
 const countries = [
   ["FR", "France"],
@@ -36,12 +35,10 @@ const countries = [
 export function CreatorEditor({
   initial = blankCreator,
   demo,
-  authenticated,
   editing = false,
 }: {
   initial?: CreatorDraft;
   demo: boolean;
-  authenticated: boolean;
   editing?: boolean;
 }) {
   const [draft, setDraft] = useState<CreatorDraft>({
@@ -51,7 +48,7 @@ export function CreatorEditor({
       ? "/images/avatar.svg"
       : initial.image,
   });
-  const [step, setStep] = useState(editing ? 1 : 0);
+  const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [availability, setAvailability] = useState("");
@@ -174,57 +171,6 @@ export function CreatorEditor({
       setBusy(false);
     }
   }
-  if (step === 0)
-    return (
-      <main id="main" className="onboarding-intro">
-        <div>
-          <Badge>BUILT AROUND YOU</Badge>
-          <h1>
-            Turn your attention
-            <br />
-            into income<span className="pink">.</span>
-          </h1>
-          <p>
-            Your followers already want to hear from you. ReplyPass gives them a
-            better way to reach you — and gives you control over your time.
-          </p>
-          <div className="intro-points">
-            <span>
-              <Icon name="message" />
-              Conversations with value
-            </span>
-            <span>
-              <Icon name="shield" />
-              Your time, on your terms
-            </span>
-            <span>
-              <Icon name="sparkles" />A page that feels like you
-            </span>
-          </div>
-          {authenticated || demo ? (
-            <Button onClick={() => { if (!demo) track("creator_onboarding_start"); setStep(1); }}>
-              Become a creator <Icon name="arrow" />
-            </Button>
-          ) : (
-            <Link
-              className="button button-primary"
-              href="/signup?next=%2Fcreator%2Fapply"
-            >
-              Become a creator <Icon name="arrow" />
-            </Link>
-          )}
-          <small>Five small steps. One closer community.</small>
-        </div>
-        <div className="intro-preview">
-          <Badge>YOUR NAME. YOUR PEOPLE.</Badge>
-          <div className="intro-monogram">
-            r<span>.</span>
-          </div>
-          <strong>Make room for a real connection.</strong>
-          <p>Messages. Moments. More you.</p>
-        </div>
-      </main>
-    );
   const headings = [
     "",
     "Let’s make it yours.",
@@ -555,7 +501,7 @@ export function CreatorEditor({
         <Button
           variant="secondary"
           disabled={busy}
-          onClick={() => setStep((s) => Math.max(editing ? 1 : 0, s - 1))}
+          onClick={() => setStep((s) => Math.max(1, s - 1))}
         >
           Back
         </Button>

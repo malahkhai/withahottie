@@ -847,7 +847,6 @@ export function ProfileEditorPage() {
       <CreatorEditor
         initial={data.creator}
         demo={data.demo}
-        authenticated
         editing
       />
     </>

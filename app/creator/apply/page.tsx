@@ -13,7 +13,6 @@ export default async function Apply() {
     <CreatorEditor
       initial={initial || undefined}
       demo={!getSupabaseConfig()}
-      authenticated={!!viewer}
     />
   );
 }
