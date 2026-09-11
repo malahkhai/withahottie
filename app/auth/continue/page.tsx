@@ -9,6 +9,7 @@ export default async function Continue({
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
   const next = safeNext((await searchParams).next);
+  if (next === "/reset-password") redirect(next);
   redirect(
     next === "/creator/apply" || isCreatorDestination(next)
       ? next

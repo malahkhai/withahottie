@@ -7,7 +7,7 @@ export function isCreatorDestination(
 }
 export function safeNext(next: string | null | undefined) {
   return next &&
-    (/^\/(creator\/(apply|dashboard)|account)$/.test(next) ||
+    (/^\/(creator\/(apply|dashboard)|account|reset-password)$/.test(next) ||
       isCreatorDestination(next))
     ? next
     : "/account";

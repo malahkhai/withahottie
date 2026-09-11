@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import "./globals.css";
 import { siteConfig } from "@/lib/site";
 import { SiteFooter } from "@/components/site-footer";
+import { RecoveryRedirect } from "@/components/recovery-redirect";
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   applicationName: siteConfig.name,
@@ -37,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <RecoveryRedirect />
         <a href="#main" className="skip-link">
           Skip to content
         </a>

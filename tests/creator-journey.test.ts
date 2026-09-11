@@ -12,4 +12,5 @@ test('fan authentication keeps the creator and interaction without accepting ext
 test('generic fan signup is unavailable while creator onboarding remains reachable',()=>{
  for(const next of [undefined,null,'','/account','/creator/dashboard'])assert.equal(signupAllowed(next),false);
  assert.ok(signupAllowed('/creator/apply'));assert.equal(safeNext('/creator/apply'),'/creator/apply');
+ assert.equal(safeNext('/reset-password'),'/reset-password');
 });

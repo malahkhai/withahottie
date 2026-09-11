@@ -12,7 +12,7 @@ export const metadata = pageMetadata(
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; password?: string }>;
 }) {
   const q = await searchParams;
   return (
@@ -25,6 +25,11 @@ export default async function Login({
           We couldn’t finish automatic sign-in. If you confirmed your email, log
           in below to continue. Open confirmation links in the same browser you
           used to sign up.
+        </p>
+      )}
+      {q.password === "updated" && (
+        <p className="form-success" role="status">
+          Your password has been updated. Log in with your new password.
         </p>
       )}
       <AuthForm

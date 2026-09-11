@@ -128,6 +128,11 @@ export function AuthForm({
                 : "Create account"}
             <Icon name="arrow" size={18} />
           </Button>
+          {mode === "login" && (
+            <p className="auth-switch">
+              <Link href="/forgot-password">Forgot your password?</Link>
+            </p>
+          )}
         </form>
       ) : (
         <div className="demo-auth">
