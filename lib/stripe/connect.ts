@@ -3,6 +3,7 @@ import { paymentBackend } from "./server";
 import { authOrigin } from "@/lib/site";
 
 export type ConnectOnboardingStage =
+  | "load_auth_user"
   | "load_creator"
   | "initialize_record"
   | "load_record"
@@ -76,6 +77,13 @@ export async function connectStatus(creatorId: string) {
 }
 export async function onboardConnect(userId: string, origin: string) {
   const { stripe, db } = paymentBackend();
+  const { data: authData, error: authError } = await atStage(
+    "load_auth_user",
+    () => db.auth.admin.getUserById(userId),
+  );
+  const contactEmail = authData.user?.email;
+  if (authError || !contactEmail)
+    throw Error("A verified email address is required for payout setup.");
   const { data: creator, error } = await atStage("load_creator", () =>
     db
       .from("creator_profiles")
@@ -108,6 +116,7 @@ export async function onboardConnect(userId: string, origin: string) {
     const account = await atStage("create_account", () =>
       stripe.v2.core.accounts.create(
         {
+          contact_email: contactEmail,
           dashboard: "express",
           identity: { country: creator.country },
           configuration: {
@@ -125,7 +134,7 @@ export async function onboardConnect(userId: string, origin: string) {
           },
           metadata: { creator_id: creator.id },
         },
-        { idempotencyKey: `replypass:account:${creator.id}` },
+        { idempotencyKey: `replypass:account:v2:${creator.id}` },
       ),
     );
     accountId = account.id;

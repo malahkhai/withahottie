@@ -5,7 +5,7 @@ export function PayoutSetup({ connected = false }: { connected?: boolean }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   return (
-    <>
+    <div className="payout-primary-action">
       <Button
         disabled={busy}
         onClick={async () => {
@@ -36,6 +36,9 @@ export function PayoutSetup({ connected = false }: { connected?: boolean }) {
           {error}
         </p>
       )}
-    </>
+      <p className="payout-redirect-note">
+        You’ll continue on Stripe’s secure website.
+      </p>
+    </div>
   );
 }
