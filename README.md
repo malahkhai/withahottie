@@ -60,15 +60,15 @@ All amounts are integer minor units; currency is stored separately. `lib/payment
 
 ## Environment
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key, protected by RLS |
-| `SUPABASE_SERVICE_ROLE_KEY` | Trusted server-only message and financial operations |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Test publishable key (`pk_test_`) |
-| `STRIPE_SECRET_KEY` | Test secret key (`sk_test_`); server-only |
-| `STRIPE_WEBHOOK_SECRET` | Snapshot webhook signing secret (`whsec_`) |
-| `NEXT_PUBLIC_APP_URL` | Public sharing/metadata origin: `https://getreplypass.com` |
+| Variable                             | Purpose                                                    |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`           | Supabase project URL                                       |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`      | Public anon key, protected by RLS                          |
+| `SUPABASE_SERVICE_ROLE_KEY`          | Trusted server-only message and financial operations       |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Test publishable key (`pk_test_`)                          |
+| `STRIPE_SECRET_KEY`                  | Test secret key (`sk_test_`); server-only                  |
+| `STRIPE_WEBHOOK_SECRET`              | Snapshot webhook signing secret (`whsec_`)                 |
+| `NEXT_PUBLIC_APP_URL`                | Public sharing/metadata origin: `https://getreplypass.com` |
 
 Never commit secrets or `.env.local`. All Stripe keys must be absent for mock checkout, or supplied together with all three Supabase values to enable test payments. Also configure `STRIPE_CONNECT_WEBHOOK_SECRET` for a separate Accounts v2 destination, `CRON_SECRET` (32+ random characters) for reconciliation, and optional `REPLY_EXPIRY_SECONDS` (30–86400; default 86400). Invalid/partial/live configuration fails closed. Supabase-only ordinary messaging requires the server service-role key after migration 005.
 
@@ -80,7 +80,7 @@ Never commit secrets or `.env.local`. All Stripe keys must be absent for mock ch
    - `https://getreplypass.com/auth/callback`
    - `http://localhost:3000/auth/callback`
    - If using the current local preview: `http://127.0.0.1:3003/auth/callback`
-   The app appends a constrained `next` query parameter. Allow the exact callback variants with `?next=%2Faccount`, `?next=%2Fcreator%2Fapply`, and `?next=%2Fcreator%2Fdashboard` for each origin in use. Do not add broad production host wildcards. Explicitly configure a trusted preview origin in `NEXT_PUBLIC_APP_URL` and allow that callback when testing email confirmation on previews.
+     The app appends a constrained `next` query parameter. Allow the exact callback variants with `?next=%2Faccount`, `?next=%2Fcreator%2Fapply`, and `?next=%2Fcreator%2Fdashboard` for each origin in use. Do not add broad production host wildcards. Explicitly configure a trusted preview origin in `NEXT_PUBLIC_APP_URL` and allow that callback when testing email confirmation on previews.
 4. Migration 001 creates the original 16 domain tables and signup profile trigger. Migration 002 adds onboarding, availability, social links, saved creators, request timestamps, constrained creator RPCs, public avatar storage and member-only Realtime messages. Migration 003 adds private chat attachment storage and its send RPC.
 5. Keep the `private` schema out of exposed API schemas. Verify `messages` is enabled in the `supabase_realtime` publication. Migrations add it when the publication exists.
 6. Optionally generate database types: `npx supabase gen types typescript --linked > types/database.ts`.
@@ -149,6 +149,8 @@ Use `/Users/admin/Developer/ReplyPass` as the working repository; the older Docu
 ## Task 3 validation
 
 `tests/secured-payments.test.ts` uses a mocked Stripe provider for holds, declines, expiry, capture/transfer retries, signatures and idempotency. SQL suites cover permissions, ownership, immutable prices and fulfillment claims; `tests/db-concurrency.py` uses concurrent database connections. `tests/stripe-browser.mjs` mocks Stripe.js and checkout responses to verify the Payment Element UI contract, insufficient funds, retry identity and server-confirmed success. It requires a test-configured app and `TEST_CREATOR_HANDLE` identifying a published, non-demo creator with Guaranteed Reply enabled; see its header. The ordinary browser suite requires credentials absent. No automated test sends money or establishes hosted service readiness.
+
+Task 3.5 sandbox readiness and the evidence still required for a real authorization/capture/transfer are recorded in [docs/task-3-5-validation.md](docs/task-3-5-validation.md). Run `npm run payment:readiness` for a secret-safe configuration, schema, webhook and account summary. An authenticated admin can also call `/api/admin/payments/readiness`; neither diagnostic returns credentials or financial object IDs.
 
 ## Creator-led acquisition and navigation
 

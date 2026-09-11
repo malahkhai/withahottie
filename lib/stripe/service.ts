@@ -4,6 +4,7 @@ import { paymentBackend } from "./server";
 import { connectStatus } from "./connect";
 import { PaymentEngine, type Intent, type ReplyPayment } from "./engine";
 import { PLATFORM_FEE_BPS } from "@/lib/payments/fees";
+import { paymentLog } from "./log";
 function snapshot(pi: Stripe.PaymentIntent): Intent {
   const charge = typeof pi.latest_charge === "object" ? pi.latest_charge : null;
   return {
@@ -90,25 +91,32 @@ export function replyService() {
         return snapshot(pi);
       },
       async capture(p) {
+        paymentLog("payment_intent.capture", "started", p.id);
         await stripe.paymentIntents.capture(
           p.stripe_payment_intent_id!,
           { amount_to_capture: p.gross_cents },
           { idempotencyKey: `replypass:capture:${p.id}` },
         );
-        return retrieve(p.stripe_payment_intent_id!);
+        const intent = await retrieve(p.stripe_payment_intent_id!);
+        paymentLog("payment_intent.capture", "succeeded", p.id);
+        return intent;
       },
       async cancel(p) {
+        paymentLog(`payment_intent.${p.operation}`, "started", p.id);
         await stripe.paymentIntents.cancel(
           p.stripe_payment_intent_id!,
           { cancellation_reason: "requested_by_customer" },
           { idempotencyKey: `replypass:cancel:${p.id}` },
         );
-        return retrieve(p.stripe_payment_intent_id!);
+        const intent = await retrieve(p.stripe_payment_intent_id!);
+        paymentLog(`payment_intent.${p.operation}`, "succeeded", p.id);
+        return intent;
       },
       async ready(id) {
         return (await connectStatus(id)).ready;
       },
       async transfer(p) {
+        paymentLog("transfer", "started", p.id);
         // Search durable provider state before retrying beyond Stripe's idempotency retention window.
         const existing = await stripe.transfers.list({
           transfer_group: p.id,
@@ -123,9 +131,10 @@ export function replyService() {
             match.destination !== p.creator_account_id
           )
             throw Error("Transfer mismatch.");
+          paymentLog("transfer", "duplicate", p.id);
           return match.id;
         }
-        return (
+        const transfer = (
           await stripe.transfers.create(
             {
               amount: p.creator_cents,
@@ -138,6 +147,8 @@ export function replyService() {
             { idempotencyKey: `replypass:transfer:${p.id}` },
           )
         ).id;
+        paymentLog("transfer", "succeeded", p.id);
+        return transfer;
       },
       async refund(p) {
         const existing = await stripe.refunds.list({

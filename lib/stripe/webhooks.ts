@@ -3,29 +3,9 @@ import "server-only";
 import type Stripe from "stripe";
 import { replyService } from "./service";
 import { connectStatus } from "./connect";
-export const paymentEvents = new Set([
-  "payment_intent.amount_capturable_updated",
-  "payment_intent.succeeded",
-  "payment_intent.canceled",
-  "payment_intent.payment_failed",
-  "charge.refunded",
-  "charge.dispute.created",
-  "charge.dispute.updated",
-  "charge.dispute.closed",
-  "refund.created",
-  "refund.updated",
-  "refund.failed",
-  "transfer.created",
-  "transfer.updated",
-  "transfer.reversed",
-]);
-export const accountEvents = new Set([
-  "v2.core.account.updated",
-  "v2.core.account.closed",
-  "v2.core.account[configuration.recipient].capability_status_updated",
-  "v2.core.account[configuration.recipient].updated",
-  "v2.core.account[requirements].updated",
-]);
+import { paymentLog } from "./log";
+import { accountEvents, paymentEvents } from "./events";
+export { accountEvents, paymentEvents } from "./events";
 export async function processWebhook(raw: string, signature: string) {
   const { stripe, db, engine, store, config } = replyService();
   const secrets = [
@@ -42,7 +22,10 @@ export async function processWebhook(raw: string, signature: string) {
   };
   if (event.livemode === true || !event.id || !event.type)
     throw Error("Only test events are accepted.");
-  if (!paymentEvents.has(event.type) && !accountEvents.has(event.type)) return;
+  if (!paymentEvents.has(event.type) && !accountEvents.has(event.type)) {
+    paymentLog(event.type, "ignored");
+    return;
+  }
   const { error: insertError } = await db
     .from("stripe_webhook_events")
     .upsert(
@@ -55,7 +38,10 @@ export async function processWebhook(raw: string, signature: string) {
     .select("processed_at,attempts")
     .eq("id", event.id)
     .single();
-  if (inbox?.processed_at) return;
+  if (inbox?.processed_at) {
+    paymentLog(event.type, "duplicate");
+    return;
+  }
   await db
     .from("stripe_webhook_events")
     .update({ attempts: (inbox?.attempts || 0) + 1 })
@@ -81,7 +67,8 @@ export async function processWebhook(raw: string, signature: string) {
           .eq("creator_id", account.creator_id);
         if (error) throw Error("Account update pending.");
       } else await connectStatus(account.creator_id);
-    }
+      paymentLog(event.type, "succeeded");
+    } else paymentLog(event.type, "unmatched");
   } else {
     const obj = event.data.object;
     let intentId: string | undefined, paymentId: string | undefined;
@@ -217,7 +204,8 @@ export async function processWebhook(raw: string, signature: string) {
           });
       }
       await engine.reconcile(p.id);
-    }
+      paymentLog(event.type, "succeeded", p.id);
+    } else paymentLog(event.type, "unmatched");
   }
   const { error } = await db
     .from("stripe_webhook_events")

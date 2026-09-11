@@ -8,7 +8,10 @@ import {
   type PaymentStore,
   type Provider,
 } from "../lib/stripe/engine.ts";
-import { stripeConfig } from "../lib/stripe/config.ts";
+import {
+  stripeConfig,
+  stripeConfigurationStatus,
+} from "../lib/stripe/config.ts";
 import { verifyEventSignature } from "../lib/stripe/signatures.ts";
 function fixture() {
   let now = Date.now();
@@ -338,6 +341,26 @@ test("Stripe configuration is absent or test-only; partial/live configuration ne
     { STRIPE_WEBHOOK_SECRET: "whsec_only" },
   ])
     assert.throws(() => stripeConfig(env));
+});
+test("operator diagnostics disclose shapes but never Stripe values", () => {
+  const secret = "sk_test_do_not_disclose";
+  const result = stripeConfigurationStatus({
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_example",
+    STRIPE_SECRET_KEY: secret,
+    STRIPE_WEBHOOK_SECRET: "whsec_snapshot",
+    STRIPE_CONNECT_WEBHOOK_SECRET: "whsec_connect",
+    CRON_SECRET: "x".repeat(32),
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "public",
+    SUPABASE_SERVICE_ROLE_KEY: "private",
+  });
+  assert.equal(result.ready, true);
+  assert.equal(JSON.stringify(result).includes(secret), false);
+  assert.equal(
+    stripeConfigurationStatus({ STRIPE_SECRET_KEY: "sk_live_rejected" })
+      .secretKey,
+    "live-rejected",
+  );
 });
 test("raw Stripe signatures reject forged, modified and stale events", () => {
   const stripe = new Stripe("sk_test_fake");

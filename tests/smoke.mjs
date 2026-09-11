@@ -19,8 +19,8 @@ test("production routes render without credentials", async () => {
   }
   assert.equal((await fetch(`${base}/@missing`)).status, 404);
   const root = await fetch(base, { redirect: "manual" });
-  assert.equal(root.status, 307);
-  assert.equal(root.headers.get("location"), "/@stella");
+  assert.equal(root.status, 200);
+  assert.match(await root.text(), /A little closer to the people you follow/);
 });
 test("checkout derives its quote and keeps same-origin protection", async () => {
   const post = (body, origin = base) =>

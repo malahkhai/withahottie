@@ -16,6 +16,13 @@ import assert from "node:assert/strict";
     hasTouch: true,
   });
   const page = await context.newPage();
+  page.setDefaultTimeout(10000);
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "replypass:analytics-consent:v1",
+      JSON.stringify({ accepted: false, at: Date.now() }),
+    ),
+  );
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const base = process.env.TEST_APP_URL || "http://127.0.0.1:3000";

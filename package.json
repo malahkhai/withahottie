@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:smoke": "node --test tests/smoke.mjs"
+    "test:smoke": "node --test tests/smoke.mjs",
+    "payment:readiness": "node --experimental-strip-types scripts/payment-readiness.ts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "6.9.0",
