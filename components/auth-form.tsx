@@ -21,6 +21,7 @@ export function AuthForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
   async function demo(role: "fan" | "creator") {
     setBusy(true);
     setError("");
@@ -73,14 +74,44 @@ export function AuthForm({
       if (result.data.session) {
         router.push(`/auth/continue?next=${encodeURIComponent(next)}`);
         router.refresh();
-      } else
+      } else {
+        setPendingEmail(email);
         setFeedback(
           next === "/creator/apply"
             ? "Check your email to confirm your account, then continue creator setup."
-            : "Check your email to confirm your account. Open the link in this browser to return to your creator. If it opens elsewhere, log in here afterward—your draft stays in this tab.",
+            : "Check your inbox and spam folder to confirm your account. Open the link in this browser to return to your creator. Your draft stays in this tab.",
         );
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function resendConfirmation() {
+    const supabase = createClient();
+    if (!supabase || !pendingEmail) return;
+    setBusy(true);
+    setError("");
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: pendingEmail,
+        options: {
+          emailRedirectTo: `${authOrigin(location.origin)}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
+      });
+      if (error) throw error;
+      setFeedback(
+        "A new confirmation email is on its way. Check your inbox and spam folder.",
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setError(
+        message.toLowerCase().includes("rate limit")
+          ? "Too many confirmation emails were requested. Please wait a few minutes and try again."
+          : message || "We couldn’t resend the email. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -161,9 +192,19 @@ export function AuthForm({
         </p>
       )}
       {feedback && (
-        <p role="status" className="form-success">
-          {feedback}
-        </p>
+        <div className="auth-confirmation" role="status">
+          <p className="form-success">{feedback}</p>
+          {mode === "signup" && pendingEmail && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={busy}
+              onClick={resendConfirmation}
+            >
+              {busy ? "Sending…" : "Resend confirmation email"}
+            </Button>
+          )}
+        </div>
       )}
       <p className="auth-switch">
         {mode === "login" && !signupAllowed(next) ? (
