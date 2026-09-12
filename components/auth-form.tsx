@@ -79,7 +79,7 @@ export function AuthForm({
         setFeedback(
           next === "/creator/apply"
             ? "Check your email to confirm your account, then continue creator setup."
-            : "Check your inbox and spam folder to confirm your account. Open the link in this browser to return to your creator. Your draft stays in this tab.",
+            : "Check your inbox and spam folder to confirm your account. After confirming, return to this browser to continue. If the link opens elsewhere, come back here and log in—your draft stays in this tab.",
         );
       }
     } catch (error) {

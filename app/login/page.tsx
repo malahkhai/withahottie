@@ -22,9 +22,9 @@ export default async function Login({
       <p className="auth-description">{siteConfig.tagline}</p>
       {q.error && (
         <p className="form-error" role="alert">
-          We couldn’t finish automatic sign-in. If you confirmed your email, log
-          in below to continue. Open confirmation links in the same browser you
-          used to sign up.
+          Your email may already be confirmed, but automatic sign-in could not
+          finish in this browser. Return to the browser where you signed up and
+          log in with your new account to continue.
         </p>
       )}
       {q.password === "updated" && (
