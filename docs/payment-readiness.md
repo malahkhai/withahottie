@@ -10,6 +10,7 @@ This records the implementation and local checks, not a comprehensive security a
 | Ledger | `transactions`: unique charge, fee, transfer and refund entries, no client writes |
 | Payout account | `creator_stripe_accounts`: service-only Accounts v2 recipient mapping and eligibility flags; no public KYC details |
 | Event inbox | `stripe_webhook_events`: verified event ID/type, attempts and completion timestamp; no raw sensitive event payload |
+| Rating | `ratings`: one fan-owned score per completed paid interaction; raw author records remain protected while public profiles read a published aggregate |
 
 ## Enforced boundaries
 
@@ -17,10 +18,13 @@ This records the implementation and local checks, not a comprehensive security a
 - Server authentication supplies fan/creator IDs. APIs enforce ownership and same-origin mutations. Admin refunds require a trusted profile role; onboarding and signup cannot grant admin. Browser totals, currency, fee percentage and destination account are ignored.
 - Service-only financial tables have RLS and no anon/authenticated grants. Legacy user-executable request/message mutation RPCs are revoked so they cannot bypass the qualifying-reply handler. Ordinary messages still use trusted server submission with SQL membership/block checks, even when Stripe is absent.
 - Checkout atomically reads enabled pricing, creator availability, blocks and stored eligibility; server code refreshes Stripe eligibility before it. Financial snapshots are immutable. Currency is separate lowercase ISO (`eur`, `usd`, `gbp`); current pricing UI is EUR-only. Amounts and fee rounding use integers.
+- Creator price edits affect only new checkouts. Existing requests retain their gross/fee/net/currency snapshot, disabling an offering rejects new checkouts without deleting history, and recurring VIP prices will be versioned so current members keep the price they accepted by default. See [pricing-and-vip.md](pricing-and-vip.md).
 - Unique fan/attempt keys plus advisory locks prevent duplicated order preparation. Creator/message parameters are checked when reusing the same attempt. Stripe operations use deterministic idempotency keys; provider recovery searches precede retrying an unknown creation. Unknown creation older than 23 hours stops for investigation rather than risking a second authorization/account after key retention expires.
 - Acceptance and first reply lock the payment row. The first non-empty creator reply in the correct accepted conversation, before its deadline, is persisted with one capture claim. Concurrent replies retain both messages but have one fulfillment claim. Capture happens afterward. No manual completion endpoint exists for secured requests.
 - Stripe state and exact amount/currency/metadata are verified before financial transitions. Signatures cover the raw body with timestamp tolerance. Inbox completion occurs only after successful reconciliation; repeated or out-of-order notifications use current provider state and idempotent writes.
 - Capture failures retain the reply for retry. Transfer failures retain captured earnings liability. Declines/expiry cancel a hold; admin refunds after capture reverse transferred earnings. Partial external refunds/reversals and won disputes pause automation for manual review.
+- After a qualifying reply, the creator share is transferred to the connected Stripe balance. Stripe then controls bank availability and payout timing. The current sandbox account is active with no compliance tasks and uses a seven-day rolling availability period; its dashboard currently schedules the available balance automatically.
+- Ratings are accepted only through a same-origin authenticated route. A service-only database function verifies the author is the paying fan and that the interaction reached a captured/completed state. One rating can be updated per interaction. Public pages receive only the count and average of published ratings.
 - The protected cron uses a timing-safe bearer comparison, bounded batches, rotating update timestamps and idempotent operations. Database deadlines reject late acceptance/replies even if the scheduler is delayed. The scheduler must actually be deployed or invoked locally for automatic cancellation.
 
 ## Checks and practical limits

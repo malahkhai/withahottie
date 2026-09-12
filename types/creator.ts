@@ -40,6 +40,7 @@ export interface PublicCreator {
   image: string;
   categories: string[];
   rating: string;
+  ratingCount: number;
   responseRate: string;
   responseTime: string;
   completedChats: string;

@@ -88,6 +88,7 @@ export async function findCreator(raw: string): Promise<PublicCreator | null> {
             ...toPublic(own),
             verified: true,
             rating: "4.9",
+            ratingCount: 1260,
             responseRate: "98%",
             responseTime: "~8 min",
             completedChats: "2.4K",
@@ -110,6 +111,7 @@ export async function findCreator(raw: string): Promise<PublicCreator | null> {
     const [
       { data: profile, error: pError },
       { data: prices, error: priceError },
+      { data: ratingSummary },
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -120,6 +122,7 @@ export async function findCreator(raw: string): Promise<PublicCreator | null> {
         .from("creator_pricing")
         .select("kind,amount_cents,active")
         .eq("creator_id", row.id),
+      supabase.rpc("creator_rating_summary", { creator: row.id }),
     ]);
     if (pError || priceError || !profile) throw Error();
     const result = toPublic(draftFromRow(row, profile, prices || []), false);
@@ -130,6 +133,11 @@ export async function findCreator(raw: string): Promise<PublicCreator | null> {
       responseRate: row.response_rate === null ? "—" : `${row.response_rate}%`,
       responseTime: row.reply_time || "Not set",
       completedChats: String(row.completed_chats),
+      rating:
+        ratingSummary?.[0]?.rating_count > 0
+          ? Number(ratingSummary[0].average_score).toFixed(1)
+          : "New",
+      ratingCount: Number(ratingSummary?.[0]?.rating_count || 0),
     };
   } catch {
     return username === "stella" ? demoStella : null;

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "./icon";
 import { Price } from "./ui";
+import { RequestRating } from "./request-rating";
 
 export type FanRequestSummary = {
   id: string;
+  interaction_id: string;
   creatorName: string;
   creatorHandle: string | null;
   creatorAvatar: string | null;
@@ -19,6 +21,7 @@ export type FanRequestSummary = {
   conversation_id: string | null;
   needs_reconciliation: boolean;
   created_at: string;
+  rating: number | null;
 };
 
 function timeRemaining(expiresAt: string) {
@@ -117,6 +120,13 @@ export function FanRequestCard({ request }: { request: FanRequestSummary }) {
             );
           })}
         </ol>
+      )}
+      {request.payment_state === "captured" && (
+        <RequestRating
+          interactionId={request.interaction_id}
+          creatorName={request.creatorName}
+          initialScore={request.rating}
+        />
       )}
       <footer className="fan-request-actions">
         <div className="fan-request-deadline">

@@ -30,7 +30,7 @@ end $$;
 reset role;
 set local role service_role;
 do $$
-declare p public.reply_payments; again public.reply_payments; reply jsonb; first_reply uuid; c uuid; x public.reply_payments;
+declare p public.reply_payments; again public.reply_payments; reply jsonb; first_reply uuid; c uuid; x public.reply_payments; repriced public.reply_payments;
 begin
  begin perform public.prepare_reply('00000000-0000-4000-8000-000000000021','10000000-0000-4000-8000-000000000022',gen_random_uuid(),'Unready',1500);raise exception 'Unready creator purchased';exception when raise_exception then if sqlerrm='Unready creator purchased' then raise;end if;end;
  p:=public.prepare_reply('00000000-0000-4000-8000-000000000021','10000000-0000-4000-8000-000000000021','50000000-0000-4000-8000-000000000021','What inspires your work?',1500);
@@ -39,6 +39,13 @@ begin
  if exists(select 1 from public.interaction_requests where id=p.request_id) then raise exception 'Request exposed before authorization';end if;
  begin perform public.prepare_reply(p.fan_id,'10000000-0000-4000-8000-000000000022',p.attempt_key,p.message,1500);raise exception 'Creator substitution accepted';exception when raise_exception then if sqlerrm='Creator substitution accepted' then raise;end if;end;
  begin update public.reply_payments set gross_cents=500,creator_cents=440 where id=p.id;raise exception 'Snapshot changed';exception when raise_exception then if sqlerrm='Snapshot changed' then raise;end if;end;
+ update public.creator_pricing set amount_cents=500 where creator_id=p.creator_id and kind='message';
+ repriced:=public.prepare_reply(p.fan_id,p.creator_id,gen_random_uuid(),'New price request',1500);
+ if p.gross_cents<>400 or repriced.gross_cents<>500 or repriced.fee_cents<>75 or repriced.creator_cents<>425 then raise exception 'Price versioning failed';end if;
+ update public.creator_pricing set active=false where creator_id=p.creator_id and kind='message';
+ begin perform public.prepare_reply(p.fan_id,p.creator_id,gen_random_uuid(),'Disabled offer',1500);raise exception 'Disabled offer purchased';exception when raise_exception then if sqlerrm='Disabled offer purchased' then raise;end if;end;
+ if (select gross_cents from public.reply_payments where id=p.id)<>400 then raise exception 'Disabling offer changed history';end if;
+ update public.creator_pricing set active=true where creator_id=p.creator_id and kind='message';
  p:=public.reply_transition(p.id,'bind',null,'{"intent":"pi_secured_test"}');
  p:=public.reply_transition(p.id,'authorize',null,jsonb_build_object('ttl',86400,'capture_before',now()+interval '7 days'));
  perform public.reply_transition(p.id,'authorize',null,jsonb_build_object('ttl',86400,'capture_before',now()+interval '7 days'));
@@ -60,6 +67,11 @@ begin
  p:=public.reply_transition(p.id,'transferred',null,'{"transfer":"tr_secured_test"}');
  perform public.reply_transition(p.id,'transferred',null,'{"transfer":"tr_secured_test"}');
  if (select count(*) from public.transactions where interaction_id=p.interaction_id)<>3 then raise exception 'Duplicate ledger entries';end if;
+ begin perform public.submit_interaction_rating('00000000-0000-4000-8000-000000000022',p.interaction_id,5,null);raise exception 'Non-paying fan rated interaction';exception when raise_exception then if sqlerrm='Non-paying fan rated interaction' then raise;end if;end;
+ perform public.submit_interaction_rating(p.fan_id,p.interaction_id,5,'Excellent reply');
+ perform public.submit_interaction_rating(p.fan_id,p.interaction_id,4,'Updated rating');
+ if (select count(*) from public.ratings where interaction_id=p.interaction_id)<>1 or (select score from public.ratings where interaction_id=p.interaction_id)<>4 then raise exception 'Verified rating upsert failed';end if;
+ if (select rating_count from public.creator_rating_summary(p.creator_id))<>1 then raise exception 'Published rating aggregate failed';end if;
  begin perform public.reply_transition(p.id,'refund',p.fan_id);raise exception 'Unauthorized refund';exception when raise_exception then if sqlerrm='Unauthorized refund' then raise;end if;end;
  -- An accepted request still expires if no creator reply arrives.
  x:=public.prepare_reply(p.fan_id,p.creator_id,gen_random_uuid(),'Another question',1500);

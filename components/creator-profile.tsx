@@ -312,7 +312,10 @@ export function CreatorProfile({
               </div>
               <p className="bio">{creator.bio}</p>
               <div className="stats">
-                <CreatorStat value={`★ ${creator.rating}`} label="Fan rating" />
+                <CreatorStat
+                  value={`★ ${creator.rating}`}
+                  label={creator.ratingCount ? `${creator.ratingCount.toLocaleString()} ratings` : "Fan rating"}
+                />
                 <CreatorStat value={creator.responseTime} label="Avg. reply" />
                 <CreatorStat
                   value={creator.responseRate}

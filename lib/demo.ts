@@ -6,6 +6,7 @@ export const stella = {
   image: "/images/stella.jpg",
   categories: ["Lifestyle", "Fashion", "Travel"],
   rating: "4.9",
+  ratingCount: 1260,
   responseRate: "98%",
   responseTime: "~8 min",
   completedChats: "2.4K",

@@ -3101,6 +3101,35 @@ body:has(.workspace-shell) > .site-header {
 .request-progress li div { display: grid; gap: 3px; min-width: 0; }
 .request-progress strong { overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .request-progress small { font-size: 9px; white-space: nowrap; }
+.request-rating {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 20px 20px;
+  padding: 16px 18px;
+  border: 1px solid #e2e5da;
+  border-radius: 16px;
+  background: #f8f9f4;
+}
+.request-rating > div:first-child { display: grid; gap: 4px; }
+.request-rating strong { font-size: 12px; }
+.request-rating span { color: var(--muted); font-size: 10px; }
+.request-rating-stars { display: flex; gap: 2px; }
+.request-rating-stars button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #c9ccbf;
+  font-size: 21px;
+  cursor: pointer;
+}
+.request-rating-stars button:hover,
+.request-rating-stars button:focus-visible,
+.request-rating-stars button.is-selected { color: #d99538; background: #fff5e5; }
+.request-rating-stars button:disabled { cursor: wait; opacity: .7; }
 .fan-request-actions {
   display: flex;
   align-items: center;
@@ -3644,6 +3673,9 @@ body:has(.workspace-shell) > .site-header {
   .fan-request-lead p { font-size: 12px; }
   .fan-request-amount { min-width: 74px; }
   .fan-request-amount .price { font-size: 19px; }
+  .request-rating { align-items: flex-start; flex-direction: column; margin: 0 16px 17px; padding: 15px; }
+  .request-rating-stars { width: 100%; justify-content: space-between; }
+  .request-rating-stars button { width: 44px; height: 44px; }
   .request-progress { margin: 0 16px 18px; padding: 15px 12px; }
   .request-progress li { display: grid; justify-items: center; gap: 7px; text-align: center; }
   .request-progress li:not(:last-child)::after { top: 14px; right: -22%; width: 44%; }

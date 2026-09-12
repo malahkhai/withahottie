@@ -42,6 +42,7 @@ lib/
   creators/                 Repository, validation, catalog and profile mapping
   workspace/                Supabase data loading and fictional fixtures
   payments/                 Centralized fees, state model and mock quotes
+  ratings.ts                Validated fan rating input
   stripe/                   Test-mode Connect, authorization/capture, webhooks,
                             reconciliation and private payment summaries
   supabase/                 Browser/server clients and configuration
@@ -100,6 +101,8 @@ The server reads active creator pricing, blocks, account readiness and currency.
 Accounts v2 recipient configuration, Express dashboard and hosted onboarding were selected for Stripe's current marketplace architecture. Separate charges and transfers allow fulfillment-controlled capture followed by a creator transfer; the platform retains the fee and bears processor fees/loss responsibility. Connect readiness is checked before checkout and again before transfer. See [Stripe's marketplace guide](https://docs.stripe.com/connect/marketplace/quickstart) and [separate charges and transfers](https://docs.stripe.com/connect/separate-charges-and-transfers).
 
 `reply_payments` separates payment states (`pending`, `authorized`, `captured`, `canceled`, `refunded`, `disputed`, `failed`) from request states (`pending`, `accepted`, `fulfilled`, `declined`, `expired`). Existing `fulfilled` is displayed as Completed; historical migrations are preserved. `transactions` stores charge/fee/transfer/refund ledger entries separately. `creator_stripe_accounts` and the webhook inbox are service-only under RLS. Snapshot amounts cannot be mutated even by routine server updates.
+
+Completed paid interactions can receive one fan rating. The database verifies the rating author against the captured interaction, and public creator pages display only the published aggregate. Creator price changes apply to new checkouts; existing request snapshots do not change. Planned VIP renewal behavior and immutable Stripe Price versioning are documented in [pricing-and-vip.md](docs/pricing-and-vip.md).
 
 `/api/stripe/webhook` verifies raw signatures and persists event IDs. It retrieves current Stripe state instead of trusting event arrival order or browser success. Database locks/constraints and deterministic Stripe operation keys prevent duplicate orders, conversations, captures and transfers. `/api/cron/payments` rotates batches of unresolved payments using a protected bearer secret. No scheduler is enabled by the default deployment configuration; configure an external five-minute scheduler (or Vercel Pro cron) before enabling Stripe test payments. Manual-review cases pause automation. Full event subscriptions and operator steps are in [setup.md](docs/setup.md); security boundaries are in [payment-readiness.md](docs/payment-readiness.md).
 
