@@ -8,7 +8,7 @@ export default async function Account() {
   const viewer = await requireRole(["fan", "creator", "admin"]);
   const data = await loadWorkspace(viewer);
   const supabase = await createClient();
-  let saved = [{ id: "stella", name: "Stella May", handle: "stella" }];
+  let saved: { id: string; name: string; handle: string }[] = [];
   if (supabase) {
     const { data: rows, error } = await supabase
       .from("saved_creators")

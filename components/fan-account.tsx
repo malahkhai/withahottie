@@ -224,7 +224,7 @@ export function FanAccount({
                 </div>
               ))}
             {!data.subscribers.length && (
-              <AccountEmpty text="No subscriptions yet. Find a creator you want to stay closer to." />
+              <AccountEmpty text="Your active creator subscriptions will appear here." />
             )}
             <p className="workspace-footnote">
               Subscriptions are shown for context. Billing changes are not
@@ -280,7 +280,7 @@ export function FanAccount({
               </div>
             ))}
             {!savedItems.length && (
-              <AccountEmpty text="Save a creator from their page to find them here." />
+              <AccountEmpty text="Creators you save from their page will appear here." />
             )}
           </>
         )}
@@ -309,9 +309,6 @@ export function FanAccount({
           </p>
         )}
       </section>
-      <Link className="fan-discover" href="/@stella">
-        Find your next conversation <Icon name="arrow" size={17} />
-      </Link>
     </main>
   );
 }
@@ -319,9 +316,8 @@ function AccountEmpty({ text }: { text: string }) {
   return (
     <div className="workspace-empty">
       <Icon name="heart" size={28} />
-      <h3>A little space for what’s next.</h3>
+      <h3>Nothing here yet.</h3>
       <p>{text}</p>
-      <Link href="/@stella">Meet Stella →</Link>
     </div>
   );
 }
@@ -332,9 +328,7 @@ export function SaveCreator({ creator }: { creator: PublicCreator }) {
     if (creator.demo)
       void Promise.resolve().then(() =>
         setSaved(
-          demoSaved([
-            { id: "stella", name: "Stella May", handle: "stella" },
-          ]).some((c) => c.id === creator.id),
+          demoSaved([]).some((c) => c.id === creator.id),
         ),
       );
   }, [creator.demo, creator.id]);
@@ -360,9 +354,7 @@ export function SaveCreator({ creator }: { creator: PublicCreator }) {
             if (!r.ok) throw Error();
             const result = await r.json();
             if (result.demo) {
-              const items = demoSaved([
-                { id: "stella", name: "Stella May", handle: "stella" },
-              ]).filter((c) => c.id !== creator.id);
+              const items = demoSaved([]).filter((c) => c.id !== creator.id);
               if (!saved)
                 items.push({
                   id: creator.id,
