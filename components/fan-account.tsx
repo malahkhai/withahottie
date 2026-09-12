@@ -169,8 +169,21 @@ export function FanAccount({
                 aria-label="Message creator"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    !event.shiftKey &&
+                    !event.nativeEvent.isComposing
+                  ) {
+                    event.preventDefault();
+                    if (!busy && message.trim())
+                      event.currentTarget.form?.requestSubmit();
+                  }
+                }}
                 maxLength={10000}
                 placeholder="Say a little hello…"
+                enterKeyHint="send"
+                autoComplete="off"
               />
               <Button disabled={busy || !message.trim()}>
                 Send <Icon name="arrow" />

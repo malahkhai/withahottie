@@ -684,8 +684,21 @@ export function ConversationPage({ id }: { id: string }) {
           aria-label="Your message"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
+              if (!busy && (text.trim() || attachment))
+                event.currentTarget.form?.requestSubmit();
+            }
+          }}
           placeholder="Give them a little of your attention…"
           maxLength={10000}
+          enterKeyHint="send"
+          autoComplete="off"
         />
         <Button
           disabled={busy || (!text.trim() && !attachment)}
