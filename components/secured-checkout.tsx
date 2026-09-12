@@ -39,7 +39,7 @@ export function SecuredCheckout({
     e.preventDefault();
     if (!authenticated) {
       router.push(
-        `/login?next=${encodeURIComponent(`/${creator.handle}?interaction=message`)}`,
+        `/signup?next=${encodeURIComponent(`/${creator.handle}?interaction=message`)}`,
       );
       return;
     }

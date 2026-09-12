@@ -39,7 +39,7 @@ function Checkout({
     event.preventDefault();
     if (!authenticated && !creator.demo) {
       router.push(
-        `/login?next=${encodeURIComponent(`/${creator.handle}?interaction=${offering.kind}`)}`,
+        `/signup?next=${encodeURIComponent(`/${creator.handle}?interaction=${offering.kind}`)}`,
       );
       return;
     }
