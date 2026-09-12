@@ -1,6 +1,7 @@
 import "server-only";
 import { paymentBackend } from "./server";
 import { authOrigin } from "@/lib/site";
+import { payoutReadiness } from "./connect-state";
 
 export type ConnectOnboardingStage =
   | "load_auth_user"
@@ -56,12 +57,12 @@ export async function connectStatus(creatorId: string) {
   );
   const balances =
     account.configuration?.recipient?.capabilities?.stripe_balance;
-  const transfers = balances?.stripe_transfers?.status === "active";
-  const payouts = balances?.payouts?.status === "active";
-  const requirementsDue = !!account.requirements?.entries?.some(
-    (e) => e.awaiting_action_from === "user",
-  );
-  const ready = transfers && payouts && !requirementsDue;
+  const { transfers, payouts, requirementsDue, ready } = payoutReadiness({
+    transfersStatus: balances?.stripe_transfers?.status,
+    payoutsStatus: balances?.payouts?.status,
+    requirements: account.requirements?.entries,
+  });
+  const becameReady = ready && !row.ready;
   const { error: updateError } = await db
     .from("creator_stripe_accounts")
     .update({
@@ -73,6 +74,14 @@ export async function connectStatus(creatorId: string) {
     })
     .eq("creator_id", creatorId);
   if (updateError) throw Error("Could not save payout status.");
+  if (becameReady) {
+    const { error: pricingError } = await db
+      .from("creator_pricing")
+      .update({ active: true, updated_at: new Date().toISOString() })
+      .eq("creator_id", creatorId)
+      .eq("kind", "message");
+    if (pricingError) throw Error("Could not enable guaranteed replies.");
+  }
   return { connected: true, ready, transfers, payouts, requirementsDue };
 }
 export async function onboardConnect(userId: string, origin: string) {
