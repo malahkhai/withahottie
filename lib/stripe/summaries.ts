@@ -31,7 +31,7 @@ export async function paymentSummaries(
     .in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
   const { data: creators } = await db
     .from("creator_profiles")
-    .select("id,profiles(display_name)")
+    .select("id,handle,profiles(display_name,avatar_path)")
     .in(
       "id",
       (data || []).length
@@ -45,7 +45,17 @@ export async function paymentSummaries(
       (
         creators?.find((c) => c.id === p.creator_id)?.profiles as unknown as {
           display_name: string;
+          avatar_path: string | null;
         }
       )?.display_name || "your creator",
+    creatorHandle:
+      creators?.find((c) => c.id === p.creator_id)?.handle || null,
+    creatorAvatar:
+      (
+        creators?.find((c) => c.id === p.creator_id)?.profiles as unknown as {
+          display_name: string;
+          avatar_path: string | null;
+        }
+      )?.avatar_path || null,
   }));
 }

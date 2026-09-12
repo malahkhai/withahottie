@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { stripeConfig } from "@/lib/stripe/config";
 import { paymentSummaries } from "@/lib/stripe/summaries";
-import { Price } from "@/components/ui";
+import { FanRequestCard } from "@/components/fan-request-card";
+import { Icon } from "@/components/icon";
 export const metadata = {
   title: "Your requests",
   robots: { index: false, follow: false },
@@ -13,68 +14,75 @@ export default async function Page() {
     !viewer.demo && stripeConfig()
       ? await paymentSummaries(viewer.id, "fan")
       : [];
+  const activeCount = rows.filter(
+    (request) => request.payment_state === "authorized",
+  ).length;
+  const repliedCount = rows.filter(
+    (request) => request.payment_state === "captured",
+  ).length;
   return (
-    <main id="main" className="fan-account">
-      <h1>Your requests.</h1>
-      <p>No reply = no charge.</p>
-      {rows.map((p) => (
-        <article key={p.id} className="request-card">
-          <h2>
-            {p.payment_state === "captured"
-              ? "Replied ✓"
-              : p.payment_state === "canceled"
-                ? p.declined_at
-                  ? "Declined"
-                  : "Expired"
-                : p.payment_state === "refunded"
-                  ? "Refunded"
-                  : p.payment_state === "disputed"
-                    ? "Payment under review"
-                    : p.accepted_at
-                      ? "Accepted"
-                      : p.payment_state === "authorized"
-                        ? `Waiting for ${p.creatorName}`
-                        : "Reservation not completed"}
-          </h2>
-          {p.needs_reconciliation ? (
-            <p>
-              We’re checking this payment. Your messages are saved; please don’t
-              submit another payment.
-            </p>
-          ) : (
-            <p>
-              <Price cents={p.gross_cents} currency={p.currency} decimals />{" "}
-              {p.payment_state === "captured"
-                ? "was charged after your creator replied."
-                : p.payment_state === "authorized"
-                  ? p.accepted_at
-                    ? "is reserved. Your creator accepted; you’re only charged when they reply."
-                    : "is reserved on your payment method. You haven’t been charged."
-                  : p.payment_state === "canceled"
-                    ? "was not charged. Your bank may take time to remove the pending hold."
-                    : "— check the latest payment status before starting another request."}
-            </p>
-          )}
-          {p.expires_at && (
-            <p>
-              Reply deadline: {new Date(p.expires_at).toLocaleString("en-GB")}
-            </p>
-          )}
-          {p.conversation_id && <Link href="/account">Open messages</Link>}
-        </article>
-      ))}
-      {!rows.length && (
-        <div className="workspace-empty">
-          <h2>No secured requests yet.</h2>
+    <main id="main" className="fan-account fan-requests-page">
+      <section className="fan-requests-heading">
+        <div>
+          <span className="eyebrow">YOUR REQUESTS</span>
+          <h1>Every reply, in one place.</h1>
+          <p>Follow each request from reservation to reply.</p>
+        </div>
+        <div className="fan-promise">
+          <Icon name="shield" size={18} />
+          <span>
+            <strong>No reply</strong>
+            No charge
+          </span>
+        </div>
+      </section>
+      {!!rows.length && (
+        <div className="fan-request-summary" aria-label="Request summary">
+          <div>
+            <strong>{activeCount}</strong>
+            <span>Active</span>
+          </div>
+          <div>
+            <strong>{repliedCount}</strong>
+            <span>Replied</span>
+          </div>
           <p>
-            {viewer.demo
-              ? "Demo requests remain available in your account."
-              : "Your requests appear here once you start a reservation."}
+            Your bank may show a temporary hold while a reply is pending. It is
+            only captured when the creator replies.
           </p>
-          <Link href="/account">View account</Link>
         </div>
       )}
-      <Link href="/@stella">Discover creators</Link>
+      <section className="fan-request-list" aria-label="Secured requests">
+        {rows.map((request) => (
+          <FanRequestCard key={request.id} request={request} />
+        ))}
+      </section>
+      {!rows.length && (
+        <div className="fan-requests-empty">
+          <span className="fan-requests-empty-icon">
+            <Icon name="message" size={28} />
+          </span>
+          <h2>Your first conversation starts with a creator.</h2>
+          <p>
+            {viewer.demo
+              ? "Sign in with Supabase to track real secured requests."
+              : "Requests will appear here after you ask a creator for a guaranteed reply."}
+          </p>
+          <Link className="button button-primary" href="/">
+            Back to ReplyPass <Icon name="arrow" size={17} />
+          </Link>
+        </div>
+      )}
+      <aside className="fan-request-trust">
+        <Icon name="lock" size={20} />
+        <div>
+          <strong>Your payment stays protected.</strong>
+          <p>
+            ReplyPass uses Stripe to reserve the price. A creator’s reply is
+            what completes the charge.
+          </p>
+        </div>
+      </aside>
     </main>
   );
 }

@@ -7,11 +7,13 @@ import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
+  ExpressCheckoutElement,
   PaymentElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
 import { Button, Price, Badge } from "./ui";
+import { Icon } from "./icon";
 import type { PublicCreator } from "@/types/creator";
 const stripePromise =
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_test_")
@@ -148,9 +150,9 @@ function Confirmation({ quote, name }: { quote: Quote; name: string }) {
     [error, setError] = useState(""),
     [reserved, setReserved] = useState(false),
     [confirmed, setConfirmed] = useState(false),
-    [expires, setExpires] = useState("");
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+    [expires, setExpires] = useState(""),
+    [walletsAvailable, setWalletsAvailable] = useState(false);
+  async function confirmReservation(walletFailure?: () => void) {
     if (!stripe || !elements) return;
     setBusy(true);
     setError("");
@@ -161,11 +163,13 @@ function Confirmation({ quote, name }: { quote: Quote; name: string }) {
           confirmParams: { return_url: `${location.origin}/account/requests` },
           redirect: "if_required",
         });
-        if (result.error)
+        if (result.error) {
+          walletFailure?.();
           throw Error(
             result.error.message ||
               "Your card could not be authorized. No request was sent.",
           );
+        }
         setConfirmed(true);
       }
       const response = await fetch(`/api/payments/reply/${quote.id}`, {
@@ -187,6 +191,10 @@ function Confirmation({ quote, name }: { quote: Quote; name: string }) {
       setBusy(false);
     }
   }
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    await confirmReservation();
+  }
   if (reserved)
     return (
       <div className="checkout-done" role="status">
@@ -207,12 +215,60 @@ function Confirmation({ quote, name }: { quote: Quote; name: string }) {
     );
   return (
     <form className="auth-form" onSubmit={submit}>
-      <p>
-        We’ll temporarily reserve{" "}
-        <Price cents={quote.amountCents} currency={quote.currency} />. You’re
-        only charged if {name} replies.
-      </p>
-      <PaymentElement options={{ layout: "tabs" }} />
+      <div className="checkout-reservation-note">
+        <Icon name="shield" size={19} />
+        <p>
+          We’ll temporarily reserve{" "}
+          <Price cents={quote.amountCents} currency={quote.currency} />. You’re
+          only charged if {name} replies.
+        </p>
+      </div>
+      <div className="wallet-checkout">
+        {walletsAvailable && <strong>Fast checkout</strong>}
+        <ExpressCheckoutElement
+          options={{
+            buttonHeight: 52,
+            buttonType: { applePay: "buy", googlePay: "buy" },
+            layout: { maxColumns: 1, maxRows: 2, overflow: "never" },
+            paymentMethods: {
+              applePay: "auto",
+              googlePay: "auto",
+              link: "never",
+              amazonPay: "never",
+              paypal: "never",
+              klarna: "never",
+            },
+          }}
+          onReady={({ availablePaymentMethods }) =>
+            setWalletsAvailable(
+              Boolean(
+                availablePaymentMethods?.applePay ||
+                  availablePaymentMethods?.googlePay,
+              ),
+            )
+          }
+          onConfirm={(event) =>
+            void confirmReservation(() =>
+              event.paymentFailed({
+                reason: "fail",
+                message:
+                  "We couldn’t authorize this payment. Please try again.",
+              }),
+            )
+          }
+        />
+      </div>
+      {walletsAvailable && (
+        <div className="checkout-divider">
+          <span>or pay by card</span>
+        </div>
+      )}
+      <PaymentElement
+        options={{
+          layout: "tabs",
+          wallets: { applePay: "never", googlePay: "never" },
+        }}
+      />
       <Button disabled={!stripe || busy}>
         {busy ? (
           "Checking reservation…"
