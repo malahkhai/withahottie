@@ -114,7 +114,17 @@ export default async function Page() {
           )}
 
           {enabled && !viewer.demo ? (
-            <PayoutSetup connected={status.connected} />
+            status.ready ? (
+              <div className="payout-ready-note">
+                <Icon name="check" size={18} />
+                <span>
+                  <strong>Payout setup complete</strong>
+                  Guaranteed Reply is enabled on your creator profile.
+                </span>
+              </div>
+            ) : (
+              <PayoutSetup connected={status.connected} />
+            )
           ) : (
             <p className="demo-notice payout-demo-notice">
               Demo mode is active. Add Stripe test credentials and Supabase to

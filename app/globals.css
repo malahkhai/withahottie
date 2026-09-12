@@ -2694,6 +2694,20 @@ body:has(.workspace-shell) > .site-header {
 .payout-status-grid strong i.active { background: #4d8563; }
 .payout-primary-action .button { width: 100%; min-height: 52px; border-radius: 12px; }
 .payout-redirect-note { margin-top: 11px; color: #8b8f87; font-size: 10px; text-align: center; }
+.payout-ready-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 17px;
+  border: 1px solid #dce7d0;
+  border-radius: 12px;
+  background: #f2f7eb;
+  color: #65705b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.payout-ready-note svg { flex: 0 0 auto; color: #4d8563; }
+.payout-ready-note strong { display: block; color: var(--ink); margin-bottom: 2px; }
 .payout-primary-action .form-error {
   border: 1px solid #f0d5d1;
   border-radius: 10px;
