@@ -207,6 +207,28 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
         0,
       );
   });
+  let profileViews = 0;
+  const { data: ownedCreator, error: creatorLookupError } = await supabase
+    .from("creator_profiles")
+    .select("id")
+    .eq("profile_id", viewer.id)
+    .maybeSingle();
+  if (creatorLookupError) throw Error("Could not load profile analytics.");
+  if (ownedCreator) {
+    const since = new Date(Date.now() - 6 * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const { data: viewDays, error: viewsError } = await supabase
+      .from("creator_profile_view_days")
+      .select("view_count")
+      .eq("creator_id", ownedCreator.id)
+      .gte("viewed_on", since);
+    if (viewsError) throw Error("Could not load profile analytics.");
+    profileViews = (viewDays || []).reduce(
+      (total, day) => total + Number(day.view_count),
+      0,
+    );
+  }
   return {
     demo: false,
     viewer,
@@ -225,7 +247,7 @@ export async function loadWorkspace(viewer: Viewer): Promise<WorkspaceData> {
       renewsAt: s.current_period_end || "",
     })),
     earnedToday: revenue[6],
-    profileViews: 0,
+    profileViews,
     revenue,
   };
 }

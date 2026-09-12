@@ -237,10 +237,8 @@ export function DashboardHome() {
         />
         <Metric
           label="Profile views"
-          value={data.demo ? data.profileViews : "—"}
-          note={
-            data.demo ? "A little more discovery" : "Tracking not connected"
-          }
+          value={data.profileViews}
+          note={data.demo ? "A little more discovery" : "Last 7 days"}
           icon="user"
         />
       </div>
@@ -818,8 +816,8 @@ export function AnalyticsPage() {
       <div className="metric-grid">
         <Metric
           label="Profile views"
-          value={data.demo ? 386 : "—"}
-          note={data.demo ? "Demo data" : "Tracking not connected"}
+          value={data.profileViews}
+          note={data.demo ? "Demo data" : "Last 7 days"}
           icon="user"
         />
         <Metric

@@ -5,6 +5,7 @@ import { pageMetadata } from "@/lib/metadata";
 import { siteConfig } from "@/lib/site";
 import { notFound } from "next/navigation";
 import { CreatorProfile } from "@/components/creator-profile";
+import { ProfileViewTracker } from "@/components/profile-view-tracker";
 import { findCreator } from "@/lib/creators/repository";
 export async function generateMetadata({
   params,
@@ -42,12 +43,15 @@ export default async function Profile({
   const creator = await findCreator(handle);
   if (!creator) notFound();
   return (
-    <CreatorProfile
-      key={`${handle}:${interaction || ""}`}
-      initialInteraction={interaction}
-      creator={creator}
-      authenticated={!!(await getViewer())}
-      paymentsEnabled={!!stripeConfig() && !creator.demo}
-    />
+    <>
+      {!creator.demo && <ProfileViewTracker creatorId={creator.id} />}
+      <CreatorProfile
+        key={`${handle}:${interaction || ""}`}
+        initialInteraction={interaction}
+        creator={creator}
+        authenticated={!!(await getViewer())}
+        paymentsEnabled={!!stripeConfig() && !creator.demo}
+      />
+    </>
   );
 }
