@@ -1,6 +1,6 @@
 # ReplyPass measurement plan
 
-GA4 measurement ID: `G-C6DL1WLHDM`. Only `getreplypass.com` sends analytics. Localhost and preview hosts never do. Analytics is release-gated: set `NEXT_PUBLIC_GA_ENABLED=true` in Vercel and redeploy only after completing the stream settings below. It is disabled by default. Do not install the supplied snippet separately: it would duplicate tracking and bypass consent.
+GA4 measurement ID: `G-C6DL1WLHDM`. Only `getreplypass.com` and `www.getreplypass.com` send analytics. Localhost and preview hosts never do. Analytics is release-gated: set `NEXT_PUBLIC_GA_ENABLED=true` in Vercel and redeploy only after completing the stream settings below. It is disabled by default. Do not install the supplied snippet separately: it would duplicate tracking and bypass consent.
 
 ## Consent
 
@@ -46,6 +46,6 @@ Events are consent-gated and do not replay pre-consent actions. No arbitrary tex
 3. Admin → Custom definitions: create event-scoped dimensions `page_group` and `funnel_detail`.
 4. After events arrive, mark `creator_launch_success` as a key event. Do not mark `signup_submitted` as verified signup or checkout as purchase.
 5. Explore → Funnel exploration: home/creator_landing → creator_cta_click → signup_submitted (creator) → creator_onboarding_start → creator_launch_success. Fan funnel: creator_profile → interaction_select → signup_submitted/login → checkout_started. Consent refusals, cross-browser email confirmation and blocked analytics naturally make these incomplete.
-6. Verify production in Realtime after accepting. Use Google Tag Assistant to inspect all four consent signals. No GA requests should occur in a fresh browser before consent or after rejection.
+6. Verify production in Realtime after accepting. Use Google Tag Assistant to inspect all four consent signals. No GA requests should occur in a fresh browser before consent or after rejection. GA4's installation tester does not accept the site's consent prompt, so Basic Consent Mode can make that tester report “not detected” even when the consented integration works correctly.
 
 No GA4 account settings were changed by this code deployment. Reports depend on consent, blockers and GA processing; financial reporting remains in the database/Stripe.

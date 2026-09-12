@@ -1,5 +1,8 @@
 export const GA_ID = "G-C6DL1WLHDM";
 export const CONSENT_KEY = "replypass:analytics-consent:v1";
+export function analyticsHostAllowed(hostname: string) {
+  return hostname === "getreplypass.com" || hostname === "www.getreplypass.com";
+}
 export function pageGroup(path: string) {
   if (/^\/@[^/]+$/.test(path)) return "creator_profile";
   if (/^\/creator\/inbox\/[^/]+$/.test(path)) return "creator_conversation";
